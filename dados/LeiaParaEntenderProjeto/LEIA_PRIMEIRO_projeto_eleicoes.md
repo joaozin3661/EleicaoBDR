@@ -1,3 +1,5 @@
+> **Aviso (14/10/2026):** este documento descreve a **v1** do projeto (banco `eleicoes`, título de eleitor como chave da `pessoa`). O trabalho atual está no banco `eleicoes_v2`, com `id_pessoa` sintético, e está documentado no [README da raiz](../../README.md). Aqui vale o histórico das decisões e dos problemas já resolvidos.
+
 # Projeto: Banco de Dados Relacional Eleitoral (TSE / IBGE)
 
 > **Para o Claude que está lendo:** este documento é a passagem de bastão de um projeto em andamento, feito por mim (Claude) com o João numa conta anterior. Leia tudo antes de responder. O João prefere respostas em **português**, diretas, com o passo a passo exato do que rodar. Ele trabalha no **Windows**, com **VS Code (Code Runner)**, **pgAdmin 4** e **PostgreSQL 18**.

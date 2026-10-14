@@ -1,155 +1,148 @@
-# ProjetoBDR: crawler de dados
+# Projeto BD Eleições (TSE / IBGE)
 
-Baixa **somente** os arquivos necessários para responder às 10 perguntas do projeto,
-nos escopos de tempo definidos (E.P. = 2018, 2020, 2022 e 2024), e organiza tudo em `dados/`.
+Trabalho de **Banco de Dados Relacional** (UFPI). Modela, carrega e consulta dados eleitorais públicos
+para responder **10 perguntas oficiais**, no escopo de **6 estados (AL, PA, PB, PR, SC, SE; 1.238 municípios)**
+e eleições de **2002 a 2024**.
 
-Tamanho total, medido nos servidores em 11/09/2026: **6,0 GB de download e ~33 GB em disco**
-(bem abaixo do teto de 200 GB).
-
-## Uso
-
-Requer Python 3.10+ e rodar a partir desta pasta.
-
-```bash
-pip install -r requirements.txt
-```
-
-```bash
-python -m crawler --simular
-```
-
-```bash
-python -m crawler
-```
-
-| Opção | Efeito |
-|---|---|
-| `--simular` | Mostra o plano (arquivo por arquivo, com tamanhos reais) e o espaço final, sem baixar nada |
-| `--perguntas 1 2 5` | Só o necessário para essas perguntas |
-| `--anos 2024` | Só esses anos, dentro do escopo de cada pergunta |
-| `--fontes tse ibge ipea dataverse` | Só essas fontes |
-| `--atualizar` | Baixa de novo o que o servidor republicou desde o último download |
-| `--carreira-ate 2026` | Estende a P10 às candidaturas de 2026 (ainda sem resultado) |
-| `--manter-zips` | Guarda os zips do TSE em `dados/_zips` (ocupa +6 GB) |
-| `--limite-gb 200` | Não baixa se o total em disco for passar desse valor (padrão 200) |
-| `--dados PASTA` | Grava em outra pasta (padrão `./dados`) |
-
-Como o crawler se comporta:
-
-- **Retomável:** pode interromper (Ctrl+C, queda de rede) e rodar de novo, que ele continua do ponto onde parou.
-- **Idempotente:** o que já está em disco não é baixado de novo.
-- **Econômico:** de cada zip do TSE extrai só os arquivos usados e, entre eles, só o consolidado
-  `*_BRASIL.csv`, porque os arquivos por UF repetem o mesmo conteúdo (conferido: o BRASIL inclui as linhas BR e ZZ).
-  O zip é apagado logo depois, então só um zip por vez ocupa disco (o maior tem 1,3 GB).
-- **Com trava de espaço:** antes de baixar, lê o índice de cada zip no servidor, soma o que será
-  extraído e aborta se passar do `--limite-gb` ou do espaço livre.
-
-Para mudar o que é baixado, edite só `crawler/catalogo.py` (`ITENS` e `NECESSIDADES`).
-
-## Organização de `dados/`
+O projeto tem três partes:
 
 ```
-dados/
-├── INDICE_PERGUNTAS.md            <- o que cada pergunta usa e o que já foi baixado
-├── tse/
-│   ├── candidatos/<ano>/                        consulta_cand_<ano>_BRASIL.csv + leiame.pdf
-│   ├── bens_candidatos/<ano>/
-│   ├── vagas/<ano>/
-│   ├── votacao_candidato_munzona/<ano>/
-│   ├── votacao_partido_munzona/<ano>/
-│   ├── detalhe_votacao_munzona/<ano>/
-│   ├── receitas_candidatos/<ano>/
-│   ├── despesas_contratadas_candidatos/<ano>/
-│   ├── comparecimento_abstencao/<ano>/
-│   └── municipio_tse_ibge/
-├── ibge/
-│   ├── pib/  populacao/  censo2022/  territorio/
-├── ipea_atlas/idhm_municipios.csv
-├── ideologia_partidos/
-└── _controle/manifesto.json       <- controle interno (versão e arquivos de cada download)
+TSE / IBGE / IPEA          Python                      PostgreSQL                    Node + React
+(arquivos públicos) ─────> crawler/ ──> carga_v2 ──>  banco eleicoes_v2  ──views──> site_eleicoes/
+                           baixa        gera CSV e      tabelas + views              API só faz SELECT
+                                        importa                                      nas views
 ```
 
-Organizei por **fonte/tipo/ano** e não por pergunta porque o mesmo arquivo serve a várias perguntas
-(a lista de candidatos é usada pelas 10). Pastas por pergunta duplicariam gigabytes. A visão por
-pergunta fica no `INDICE_PERGUNTAS.md`, gerado a cada execução.
-
-## Pergunta -> dados
-
-| # | Escopo | Dados | Colunas-chave |
-|---|---|---|---|
-| 1 | E.P. | candidatos, despesas contratadas, vagas | `DS_SIT_TOT_TURNO`, `VR_DESPESA_CONTRATADA`, `QT_VAGA` |
-| 2 | E.P. | candidatos, bens | `VR_BEM_CANDIDATO` somado por `SQ_CANDIDATO`, `DS_SIT_TOT_TURNO` |
-| 3 | E.P. | candidatos, votação por candidato e por partido, detalhe da votação, código TSE-IBGE, PIB e população (IBGE), IDHM | `QT_APTOS`, `QT_ABSTENCOES`, `QT_VOTOS_BRANCOS`, `QT_TOTAL_VOTOS_NULOS`; PIB ÷ população = per capita |
-| 4 | 2022, 2024 | candidatos, comparecimento/abstenção, votação por candidato, código TSE-IBGE, instrução no Censo 2022 | `DS_GRAU_INSTRUCAO` (candidato); `DS_GRAU_ESCOLARIDADE` + `QT_APTOS`/`QT_COMPARECIMENTO` (eleitorado por zona) |
-| 5 | E.P. | candidatos, votação por candidato e por partido, detalhe da votação, vagas | `DS_SIT_TOT_TURNO` (ELEITO POR QP / ELEITO POR MÉDIA), `QT_VOTOS_NOMINAIS_VALIDOS`, `QT_VOTOS_LEGENDA_VALIDOS`, `QT_TOTAL_VOTOS_VALIDOS`, `QT_VAGA` |
-| 6 | E.P. | candidatos, comparecimento/abstenção, votação por candidato, código TSE-IBGE, idade no Censo 2022 | `DS_FAIXA_ETARIA`, `NR_IDADE_DATA_POSSE`, `DT_NASCIMENTO`, partido do eleito; idade mediana e índice de envelhecimento |
-| 7 | E.P. | candidatos, votação por partido, código TSE-IBGE, regiões (IBGE), ideologia dos partidos | votos por `SG_PARTIDO` × escala ideológica |
-| 8 | E.P. | candidatos, receitas | `DS_FONTE_RECEITA` (ex.: FUNDO ESPECIAL = FEFC), `DS_ORIGEM_RECEITA`, `VR_RECEITA`, doador originário |
-| 9 | E.P. | candidatos, despesas contratadas | `DS_ORIGEM_DESPESA` (tipo), `DS_DESPESA` (texto livre, para a nuvem), `NM_FORNECEDOR` |
-| 10 | 1994-2024 | candidatos (16 eleições) | `NR_TITULO_ELEITORAL_CANDIDATO`, `DS_CARGO`, `DS_SIT_TOT_TURNO`, `ST_REELEICAO` |
-
-A P3 ficou no E.P. completo porque há indicadores para os quatro anos: PIB municipal até 2023,
-estimativas de população para 2018, 2020 e 2024 e o Censo para 2022.
-
-## Fontes
-
-| Fonte | Como | O que |
+| Parte | Pasta | O que faz |
 |---|---|---|
-| TSE, Portal de Dados Abertos | CDN `cdn.tse.jus.br`; se um caminho mudar, procura o zip pela API CKAN do portal | Candidatos, bens, vagas, votação, prestação de contas, comparecimento, códigos de município |
-| IBGE | API SIDRA + API de Localidades | PIB municipal (tabela 5938), população estimada (6579), Censo 2022: população (4709), idade mediana/envelhecimento (9515), instrução 18+ (10061); regiões dos municípios |
-| Atlas Brasil (PNUD/Ipea/FJP) | API do Ipeadata, séries `ADH_IDHM`, `_E`, `_L`, `_R` | IDHM e subíndices por município. O link de "dados brutos" do site do Atlas saiu do ar (404) |
-| Harvard Dataverse | API, doi:10.7910/DVN/MFIXKW | Classificação ideológica dos partidos (Bolognesi, Codato, Ribeiro & Silva; base de Bolognesi, Ribeiro & Codato, *Dados* 66(2), 2023) |
+| Crawler | `crawler/` | Baixa dos sites oficiais só os arquivos necessários (6 GB de download, ~33 GB em disco). [Detalhes](docs/CRAWLER.md) |
+| Carga e banco | `dados/questoes/carga_v2/` | Limpa os dados, resolve a identidade das pessoas, gera um CSV por tabela, importa no PostgreSQL e cria as views |
+| Site | `site_eleicoes/` | Página de apresentação (React + API em Node). [Detalhes](site_eleicoes/README.md) |
 
-O CDN do TSE recusa (HTTP 403) User-Agents que contenham "crawler", "python" ou "httpx". O crawler
-usa um User-Agent compatível que ainda identifica o projeto.
+**Regra do projeto:** o site e o app só leem **views** do banco (`views_*.sql`). Toda regra de negócio fica nas views,
+não no front. Mudou um critério? Mude a view.
 
-### Avaliadas e descartadas
+## Estrutura do repositório
 
-- **INEP:** a P4 compara a escolaridade do candidato com a de quem vota. O TSE dá a escolaridade do
-  eleitorado e do comparecimento por zona, e o Censo 2022 dá a da população. Censo Escolar e IDEB medem a rede de ensino, não a escolaridade adulta.
-- **Portal da Transparência (CGU):** o FEFC e o Fundo Partidário recebidos por cada candidato já
-  estão nas receitas do TSE (`DS_FONTE_RECEITA`). A API da CGU exige chave e não tem dados de campanha por candidato.
-- **`perfil_eleitorado`:** redundante. O `perfil_comparecimento_abstencao` tem `QT_APTOS` com os
-  mesmos cortes (faixa etária, escolaridade, zona) e ainda traz o comparecimento. Economia de ~7 GB.
-- **Arquivos por seção** (votação, detalhe e perfil do eleitor por seção), boletins de urna e logs:
-  somam dezenas de GB e o nível município/zona basta para todas as perguntas.
-- **Despesas pagas:** P1 e P9 usam as despesas contratadas. As pagas medem o fluxo de caixa e acrescentariam ~4 GB.
-- Prestação de contas de órgãos partidários, extratos bancários, CNPJ de campanha, notas fiscais,
-  fotos, propostas de governo, redes sociais, certidões criminais, motivos de cassação e coligações
-  (a composição já vem nos arquivos de candidatos e de votação por partido).
-- Votação por candidato fora do E.P.: a P10 não precisa de votos, porque situação e reeleição estão nos arquivos de candidatos.
+```
+crawler/                      pacote Python que baixa os dados (python -m crawler)
+docs/CRAWLER.md               documentação completa do crawler e das fontes
+dados/
+├── INDICE_PERGUNTAS.md       quais arquivos cada uma das 10 perguntas usa
+├── LeiaParaEntenderProjeto/  dossiê do projeto (Word/PDF), handoff e SQL das versões antigas
+├── questoes/
+│   ├── carga_v2/             PIPELINE ATUAL: scripts de carga, DDL e views (banco eleicoes_v2)
+│   ├── questao1/ questao10/  entradas e scripts da v1 (legado; os CSVs não ficam no Git)
+├── tse/leiames_unificados/   dicionários de dados do TSE (significado de cada coluna)
+└── (tse/, ibge/, ipea_atlas/ ...)  dados brutos: NÃO ficam no Git, o crawler baixa
+site_eleicoes/                site (React + Express + TypeScript)
+```
 
-## Espaço em disco (medido em 11/09/2026)
+## O banco `eleicoes_v2`
 
-| Conjunto | Em disco |
+14 tabelas (`pessoa`, `eleicao`, `partido`, `municipio`, `candidatura`, `bem_declarado`, `receita`, `despesa`, `votacao`,
+`votacao_legenda`, `eleitorado`, `totalizacao_municipio`, `vaga`, `indicador_municipal`). DDL em
+`dados/questoes/carga_v2/der_eleicoes_v2.sql`.
+
+Decisões que valem saber antes de mexer:
+
+- **`pessoa` tem chave sintética (`id_pessoa`)**, não o título de eleitor. No TSE a mesma pessoa aparece com títulos diferentes
+  e pessoas diferentes aparecem com o mesmo título. A identidade é resolvida em `carga_v2.py` (descrição no topo do arquivo)
+  e pode ser conferida com `conferir_identidade.py`.
+- `candidatura.titulo_declarado` e `cpf_declarado` guardam o valor original do TSE, sem alteração.
+- Despesas usadas: **contratadas** (não as pagas). Candidato sem despesa conta como R$ 0.
+- Eleições suplementares são descartadas. Vices e suplentes de senador não entram no custo por cadeira.
+- Formato do TSE: Latin-1, separador `;`, nulos como `#NULO`, `#NE`, `-1`, `-3`, `-4`. O CPF vem oculto (`-4`) em 2024.
+- Os 6 estados e os anos estão definidos dentro dos scripts (não há argumentos de linha de comando).
+
+## Montar tudo do zero
+
+Pré-requisitos: **Python 3.10+**, **PostgreSQL 18** (com pgAdmin 4) e **Node.js 20+**.
+
+### 1. Clonar e preparar o ambiente
+
+```
+git clone <URL-DO-REPOSITORIO>
+cd <pasta-clonada>
+pip install -r requirements.txt
+pip install pandas psycopg2-binary
+```
+
+Copie `.env.example` para `.env` (na raiz) e preencha `PGPASSWORD` com a senha do **seu** postgres. O `.env` nunca vai para o GitHub.
+
+### 2. Obter os dados
+
+Os dados brutos **não estão no Git** (dezenas de GB). Há duas origens:
+
+1. **`dados/tse/`, `dados/ibge/`, `dados/ipea_atlas/`:** rode o crawler na raiz do repositório.
+   ```
+   python -m crawler --simular
+   python -m crawler
+   ```
+   O primeiro comando só mostra o plano e o espaço usado. O segundo baixa (pode ser interrompido e retomado).
+2. **`dados/questoes/questao1/` e `dados/questoes/questao10/`** (~2,5 GB: `consulta_cand_*`, `prestacao*`, `vagas`,
+   `candidato2002`…`candidato2016`, `municipio_tse_ibge`): são as entradas do `carga_v2.py` e **não são geradas
+   pelo crawler**. Peça uma cópia ao João e coloque nessas pastas, mantendo a estrutura.
+
+### 3. Criar o banco e carregar
+
+1. No pgAdmin: botão direito em **Databases > Create > Database...**, nome `eleicoes_v2`.
+2. Gerar os CSVs (cria `dados/questoes/carga_v2/saida/`):
+   ```
+   python dados/questoes/carga_v2/carga_v2.py
+   python dados/questoes/carga_v2/carga_bens.py
+   ```
+3. Importar no banco (o primeiro cria as tabelas com `der_eleicoes_v2.sql`; para recomeçar, mude `RECRIAR = True` dentro do arquivo):
+   ```
+   python dados/questoes/carga_v2/importar_v2.py
+   python dados/questoes/carga_v2/importar_bens.py
+   ```
+4. No pgAdmin (Query Tool no `eleicoes_v2`), rode **nesta ordem**:
+   1. `views_v2.sql` (base, Q1, Q10, resumo e qualidade)
+   2. `views_q2.sql` (patrimônio x sucesso)
+   3. `views_q9.sql` (categorias de despesa e nuvem de palavras)
+
+   As views materializadas guardam o resultado: depois de recarregar dados, rode os arquivos de novo.
+
+Contagens de referência: ao final, `importar_v2.py` confere o banco contra os CSVs e imprime as divergências, se houver.
+
+### 4. Rodar o site
+
+```
+cd site_eleicoes
+copy .env.example .env      (edite a senha)
+npm install
+npm run build
+npm start
+```
+
+Abra http://localhost:3001. Para desenvolver com recarga automática, use `npm run dev` (http://localhost:5173).
+
+Alternativa em Python: `pip install streamlit plotly` e `streamlit run dados/questoes/carga_v2/app_v2.py` (Q1 e Q10).
+
+## Estado atual
+
+| Item | Situação |
 |---|---|
-| Prestação de contas (receitas + despesas contratadas), 4 anos | 11,7 GB |
-| Votação por candidato/município/zona, 4 anos | 9,1 GB |
-| Comparecimento/abstenção por perfil, 4 anos | 8,7 GB |
-| Candidatos 1994-2024 (16 eleições) | 2,2 GB |
-| Bens, votação por partido, detalhe da votação, vagas, códigos | 1,0 GB |
-| IBGE, IDHM, ideologia | 25 MB |
-| **Total** | **~33 GB** |
+| Crawler (TSE, IBGE, IPEA, Dataverse) | pronto |
+| Carga v2: pessoa, candidatura, vaga, despesa, bens | pronta |
+| Views: Q1 (custo por cadeira), Q2 (patrimônio), Q9 (categorias e palavras), Q10 (trajetória) | prontas |
+| Site: carga do banco, qualidade dos dados, Q1, Q2, Q9, Q10 (rotas `/api/...`) | pronto |
+| Tabelas `receita`, `votacao`, `votacao_legenda`, `eleitorado`, `totalizacao_municipio`, `indicador_municipal` | criadas, **vazias** (cargas pendentes: Q3 a Q8) |
+| Dossiê Word e DER atualizados para a v2 | pendente |
 
-## Observações para a análise
+O documento `dados/LeiaParaEntenderProjeto/LEIA_PRIMEIRO_projeto_eleicoes.md` descreve a **v1** (banco `eleicoes`,
+título de eleitor como chave) e está desatualizado nesses pontos; vale pelo histórico das decisões e dos problemas resolvidos.
+O significado de cada pergunta e os arquivos que ela usa estão em `dados/INDICE_PERGUNTAS.md`.
 
-- **Formato dos CSVs do TSE:** latin-1, separador `;`. Os valores `#NULO#`, `#NE`, `-1`, `-3` e `-4`
-  significam ausente ou mascarado. O layout de cada arquivo está no `leiame.pdf` da mesma pasta.
-  Os CSVs gerados das APIs (IBGE, Ipeadata) são UTF-8 com separador `;`.
-- **Turnos:** os arquivos trazem 1º e 2º turno (`NR_TURNO`). Em `DS_SIT_TOT_TURNO`, "2º TURNO"
-  indica que o candidato foi ao 2º turno, e o resultado final está na linha do 2º turno.
-- **Municípios:** o código do TSE (5 dígitos) é diferente do IBGE (7). Use `tse/municipio_tse_ibge/`.
-- **Chave do político (P10):** o CPF vem mascarado (`-4`) em 2024. O título eleitoral
-  (`NR_TITULO_ELEITORAL_CANDIDATO`) e a data de nascimento estão presentes em todos os anos
-  conferidos (1998, 2008, 2016, 2018, 2024). `SQ_CANDIDATO` muda a cada eleição e serve só para ligar
-  arquivos da mesma eleição (bens, receitas, despesas, votação).
-- **P3:** o IDHM municipal mais recente é o do Censo 2010 (os anteriores são 1991 e 2000). Para 2024 use o PIB de 2023.
-  Não há estimativa de população para 2022 e 2023; em 2022 use o Censo.
-- **P4:** a escolaridade do eleitor no TSE é a declarada no alistamento e raramente é atualizada, então
-  subestima a escolaridade real. O Censo 2022 serve de controle.
-- **P6:** para medir alternância com mais pontos no tempo, os arquivos de candidatos de 1994 a 2024,
-  baixados para a P10, trazem a sequência de prefeitos desde 1996 sem custo extra de download.
-- **P7:** `df_experts.csv` traz as notas individuais dos especialistas (0 = esquerda, 10 = direita)
-  por partido, em 2018 e 2022. A escala sai da média por partido. Partidos criados ou fundidos depois
-  de 2022 (PRD = PTB + Patriota; Mobiliza = ex-PMN; PROS incorporado ao Solidariedade; PSC ao
-  Podemos) precisam de mapeamento manual para 2024.
+## Trabalhando em dupla no Git
+
+1. Antes de começar: `git pull`.
+2. Uma branch por tarefa: `git switch -c q3-carga-indicadores`.
+3. Commits pequenos, com mensagem dizendo o quê e por quê.
+4. Abra um Pull Request para a `main` e peça para o outro revisar. Ninguém dá push direto na `main`.
+5. **Nunca commite:** `.env`, senhas, dados brutos, CSVs gerados (`saida/`), `node_modules/`. O `.gitignore` já cobre isso;
+   se um arquivo grande aparecer em `git status`, não adicione e avise.
+6. Mudou o DDL (`der_eleicoes_v2.sql`) ou uma view? Avise o outro: cada um tem seu banco local e precisa reaplicar.
+7. Scripts em `questao1/` e `questao10/` (nomes como `pythonTABELA.py`, `lerCarga.py`) são **exploração da v1** e têm caminhos
+   do PC do João fixos no código. Não use como referência; o pipeline atual é o `carga_v2/`.

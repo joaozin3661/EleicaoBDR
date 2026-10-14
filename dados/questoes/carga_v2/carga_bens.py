@@ -17,7 +17,7 @@ import pandas as pd
 # ----------------------------------------------------------------------
 PASTA = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(PASTA, "saida")
-BENS = r"C:\Users\joaom\OneDrive\Área de Trabalho\crawler\dados\tse\bens_candidatos"
+BENS = os.path.join(os.path.dirname(os.path.dirname(PASTA)), "tse", "bens_candidatos")  # dados\tse\bens_candidatos
 ANOS = [2018, 2020, 2022, 2024]
 UFS = ["AL", "PA", "PB", "PR", "SC", "SE"]
 NULOS = {"", "#NULO", "#NULO#", "#NE", "#NE#", "-1", "-3", "-4"}

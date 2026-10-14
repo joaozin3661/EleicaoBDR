@@ -35,7 +35,7 @@ import pandas as pd
 # ----------------------------------------------------------------------
 # CONFIGURAÇÃO
 # ----------------------------------------------------------------------
-QUESTOES = r"C:\Users\joaom\OneDrive\Área de Trabalho\crawler\dados\questoes"
+QUESTOES = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # dados\questoes, a pasta acima de carga_v2
 BASE1 = os.path.join(QUESTOES, "questao1")      # 2018–2024: consulta_cand, vagas, prestação de contas
 BASE10 = os.path.join(QUESTOES, "questao10")    # 2002–2016: candidatoAAAA
 ANOS = list(range(2002, 2025, 2))

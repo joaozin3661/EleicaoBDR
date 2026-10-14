@@ -9,7 +9,8 @@ node_modules/
 dist/
 
 # dados brutos baixados pelo crawler (reprodutíveis com `python -m crawler`)
-dados/tse/
+dados/tse/*
+!dados/tse/leiames_unificados/
 dados/ibge/
 dados/ipea_atlas/
 dados/ideologia_partidos/
