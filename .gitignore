@@ -1,0 +1,35 @@
+# segredos
+.env
+!.env.example
+
+# python / node
+__pycache__/
+*.pyc
+node_modules/
+dist/
+
+# dados brutos baixados pelo crawler (reprodutíveis com `python -m crawler`)
+dados/tse/
+dados/ibge/
+dados/ipea_atlas/
+dados/ideologia_partidos/
+dados/extrato_bancario_partido_2024/
+dados/_zips/
+
+# dados intermediários e saídas das cargas (grandes; regenerados pelos scripts)
+dados/questoes/**/prestacao*/
+dados/questoes/**/candidato20*/
+dados/questoes/**/saida/
+dados/questoes/**/saida_*/
+dados/questoes/**/consulta_cand_*/
+dados/questoes/**/vagas/
+dados/questoes/**/municipio_tse_ibge/
+*.csv
+*.zip
+*.7z
+*.parquet
+*.xlsx
+*.xls
+*.dta
+*.rds
+*.pkl

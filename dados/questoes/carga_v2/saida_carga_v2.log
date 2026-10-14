@@ -1,0 +1,79 @@
+=== carga_v2 | anos: 2002 a 2024 | saída: C:\Users\joaom\OneDrive\Área de Trabalho\crawler\dados\questoes\carga_v2\saida ===
+1) municipio
+  -> municipio.csv: 1,238 linhas
+2) consulta_cand
+  linhas lidas: 570,258
+  candidaturas de eleições suplementares descartadas: 790
+  candidaturas: 569,184
+  _ano
+  2002      2890
+  2004     78103
+  2006      2976
+  2008     75293
+  2010      3665
+  2012     94213
+  2014      4323
+  2016     94728
+  2018      4579
+  2020    109639
+  2022      5410
+  2024     93365
+  qualidade dos documentos por ano:
+        sem_titulo  titulo_dv_invalido  cpf_oculto  cpf_valido  nasc_invalida
+  _ano                                                                       
+  2002          89                  11           0        2797             94
+  2004          47                  28           0       77966            169
+  2006           0                   0           0        2976              0
+  2008           0                   6           0       75293              0
+  2010           0                   0           0        3665              2
+  2012         280                   1         280       93933            304
+  2014           0                   0           0        4323              0
+  2016           9                   0           9       94719              9
+  2018           0                   0           0        4579              1
+  2020          16                   1          16      109623             16
+  2022           1                   0           1        5409              1
+  2024          25                   0       93365           0             25
+3) identidade das pessoas
+  títulos compartilhados por pessoas diferentes (separados): 171
+  uniões pelo CPF: 482 | por nome + nascimento + UF de nascimento: 21 | recusadas (mesmo ano, lugares diferentes): 2
+  pessoas: 359,408 (antes, uma por título: 359,740)
+  -> pessoa.csv: 359,408 linhas
+  pessoas sem título válido: 478 | sem CPF: 48,278
+  candidatos de 2024 que ganharam CPF de outra eleição: 45,517 de 93,365
+4) candidatura, partido, eleicao
+  -> candidatura.csv: 569,184 linhas
+  -> partido.csv: 39 linhas
+  -> eleicao.csv: 12 linhas
+5) vaga
+  vagas de eleições suplementares descartadas: 56
+  -> vaga.csv: 7,512 linhas
+6) despesa
+  2018 ok (acumulado 253,684)
+  2020 ok (acumulado 976,046)
+  2022 ok (acumulado 1,295,947)
+  2024 ok (acumulado 2,099,197)
+  -> despesa.csv: 2,099,197 linhas | vazias (-1): 69,600 | candidato fora do modelo: 3,714 | valor negativo: 0
+7) validações
+  candidaturas sem pessoa: 0
+  candidaturas sem sigla: 0
+  pessoa com mais de uma candidatura no mesmo ano: 1,208 pares | 1,245 dessas linhas são INAPTO
+  pessoa em dois lugares no mesmo ano (deveria ser 0): 0
+  pessoas por número de eleições disputadas: 1=243,073, 2=65,662, 3=26,361, 4=12,950, 5=6,716, 6=3,867, 7=487, 8=185, 9=70, 10=21, 11=13, 12=3
+  deputados federais eleitos em 2018 (esperado 92): 92
+  situacao_candidatura por ano:
+  situacao_candidatura           APTO  CADASTRADO  INAPTO
+  id_eleicao                                             
+  2002                      0    2757           0     133
+  2004                      0   73138           0    4965
+  2006                      0    2782           0     194
+  2008                      0   69666           1    5626
+  2010                      0    2916           0     749
+  2012                      0   86883           0    7330
+  2014                      0    3504           0     819
+  2016                      0   89721           0    5007
+  2018                      0    4078           0     501
+  2020                      0  103126           0    6513
+  2022                      0    4822           0     588
+  2024                  93365       0           0       0
+
+PRONTO. CSVs em: C:\Users\joaom\OneDrive\Área de Trabalho\crawler\dados\questoes\carga_v2\saida
