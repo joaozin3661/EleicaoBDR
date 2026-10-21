@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ESTATICO, respostaEstatica } from "./estatico";
 
 export type Resposta<T> = { sql: string; dados: T };
 
@@ -14,12 +15,14 @@ export function useApi<T>(url: string | null) {
     }
     let vivo = true;
     setEstado((e) => ({ ...e, carregando: true, erro: undefined }));
-    fetch(url)
-      .then(async (r) => {
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.erro ?? r.statusText);
-        return j as Resposta<T>;
-      })
+    (ESTATICO
+      ? (respostaEstatica(url) as Promise<Resposta<T>>)
+      : fetch(url).then(async (r) => {
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.erro ?? r.statusText);
+          return j as Resposta<T>;
+        })
+    )
       .then((j) => vivo && setEstado({ dados: j.dados, sql: j.sql, carregando: false }))
       .catch((e: Error) => vivo && setEstado({ erro: e.message, carregando: false }));
     return () => {

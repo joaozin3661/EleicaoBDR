@@ -1,19 +1,35 @@
 import { useEffect, useState } from "react";
+import { ESTATICO } from "./estatico";
 import { Banco } from "./secoes/Banco";
 import { Qualidade } from "./secoes/Qualidade";
 import { Q1 } from "./secoes/Q1";
 import { Q2 } from "./secoes/Q2";
+import { Q3 } from "./secoes/Q3";
+import { Q4 } from "./secoes/Q4";
+import { Q6 } from "./secoes/Q6";
+import { Q8 } from "./secoes/Q8";
 import { Q9 } from "./secoes/Q9";
 import { Q10 } from "./secoes/Q10";
 
-const LINKS = [
-  { id: "banco", rotulo: "A carga" },
-  { id: "qualidade", rotulo: "Tratamento" },
-  { id: "q1", rotulo: "Q1 · Custo da cadeira" },
-  { id: "q2", rotulo: "Q2 · Patrimônio" },
-  { id: "q9", rotulo: "Q9 · Propaganda" },
-  { id: "q10", rotulo: "Q10 · Carreira" },
+// Questões exibidas na apresentação. As demais continuam no código, só não aparecem.
+// Para ver todas sem editar aqui, abra o site com ?todas na URL.
+const QUESTOES_VISIVEIS = ["q1", "q2", "q10"];
+
+const SECOES = [
+  { id: "banco", rotulo: "A carga", Componente: Banco },
+  { id: "qualidade", rotulo: "Tratamento", Componente: Qualidade },
+  { id: "q1", rotulo: "Q1 · Custo da cadeira", Componente: Q1 },
+  { id: "q2", rotulo: "Q2 · Patrimônio", Componente: Q2 },
+  { id: "q3", rotulo: "Q3 · Índices do município", Componente: Q3 },
+  { id: "q4", rotulo: "Q4 · Escolaridade", Componente: Q4 },
+  { id: "q6", rotulo: "Q6 · Idade", Componente: Q6 },
+  { id: "q8", rotulo: "Q8 · Financiamento", Componente: Q8 },
+  { id: "q9", rotulo: "Q9 · Propaganda", Componente: Q9 },
+  { id: "q10", rotulo: "Q10 · Carreira", Componente: Q10 },
 ];
+
+const mostrarTodas = ESTATICO || new URLSearchParams(window.location.search).has("todas");
+const LINKS = SECOES.filter((s) => mostrarTodas || !s.id.startsWith("q") || QUESTOES_VISIVEIS.includes(s.id));
 
 function useSecaoAtiva() {
   const [ativa, setAtiva] = useState("");
@@ -68,6 +84,7 @@ export function App() {
             {LINKS.map((l) => (
               <a key={l.id} href={`#${l.id}`} className={ativa === l.id ? "ativo" : ""}>{l.rotulo}</a>
             ))}
+            {ESTATICO && <a href="justificativa.html">Justificativas</a>}
           </div>
           <BotaoTema />
         </div>
@@ -78,8 +95,16 @@ export function App() {
           <h1>Doze eleições em um banco relacional</h1>
           <p className="lead">
             Dados abertos do TSE de 2002 a 2024, modelados em PostgreSQL e tratados para responder às perguntas do projeto.
-            Tudo o que aparece nesta página é consultado ao vivo no banco, por meio de views.
+            {ESTATICO
+              ? "Esta é uma versão estática: cada tela mostra respostas já consultadas no banco, por meio de views, e gravadas em arquivos. O banco e a consulta ao vivo rodam no computador dos autores."
+              : "Tudo o que aparece nesta página é consultado ao vivo no banco, por meio de views."}
           </p>
+          {ESTATICO && (
+            <p className="aviso">
+              Nesta versão, a busca de políticos (Q10) cobre os 2.500 com mais candidaturas, e a busca de município da Q1 cobre todos os municípios dos seis estados.
+              Os botões "Ver o SQL executado no banco" mostram a consulta usada para gerar cada resposta.
+            </p>
+          )}
           <div className="chips">
             <span className="chip">AL · PA · PB · PR · SC · SE</span>
             <span className="chip">1.238 municípios</span>
@@ -88,15 +113,13 @@ export function App() {
             <span className="chip">Antônio Inácio da Silva Neto · João Marcelo Barros Cardoso Ventura</span>
           </div>
         </header>
-        <Banco />
-        <Qualidade />
-        <Q1 />
-        <Q2 />
-        <Q9 />
-        <Q10 />
+        {LINKS.map(({ id, Componente }) => (
+          <Componente key={id} />
+        ))}
         <footer className="rodape">
-          Fontes: Portal de Dados Abertos do TSE (candidatos, vagas, bens declarados, prestação de contas — despesas contratadas, de-para de municípios TSE × IBGE).
+          Fontes: Portal de Dados Abertos do TSE (candidatos, vagas, bens declarados, prestação de contas — receitas e despesas contratadas; perfil do eleitorado por escolaridade; IBGE: idade mediana dos municípios (Censo 2022), de-para de municípios TSE × IBGE).
           Cada bloco tem "Ver o SQL executado no banco" com a consulta exata.
+          {ESTATICO && <> Os dados usados e as decisões de cada pergunta estão em <a href="justificativa.html">Justificativas</a>.</>}
         </footer>
       </main>
     </>

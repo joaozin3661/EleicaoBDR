@@ -7,6 +7,8 @@
     "dev": "concurrently -k -n api,site -c blue,green \"tsx watch server/index.ts\" \"vite\"",
     "build": "tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
+    "grava:estatico": "tsx scripts/estatico.ts",
+    "build:estatico": "tsx scripts/justificativa.ts && tsc --noEmit && vite build --mode estatico",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.0",
+    "marked": "^12.0.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"

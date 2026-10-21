@@ -55,7 +55,7 @@ export function Q9() {
   return (
     <Secao
       id="q9"
-      num="05 · Pergunta 9"
+      num="09 · Pergunta 9"
       titulo="Onde o candidato investe em propaganda?"
       descricao={
         <>

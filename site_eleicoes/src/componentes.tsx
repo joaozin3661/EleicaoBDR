@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ESTATICO } from "./estatico";
 
 export function Secao(p: { id: string; num: string; titulo: string; children: ReactNode; descricao?: ReactNode }) {
   return (
@@ -35,8 +36,8 @@ export function VerSQL({ sql }: { sql?: string }) {
 }
 
 export function Estado(p: { carregando: boolean; erro?: string; vazio?: boolean; msgVazio?: string }) {
-  if (p.erro) return <p className="erro">Erro ao consultar o banco: {p.erro}</p>;
-  if (p.carregando) return <p className="aviso">Consultando o banco…</p>;
+  if (p.erro) return <p className="erro">{ESTATICO ? "Erro ao carregar os dados" : "Erro ao consultar o banco"}: {p.erro}</p>;
+  if (p.carregando) return <p className="aviso">{ESTATICO ? "Carregando…" : "Consultando o banco…"}</p>;
   if (p.vazio) return <p className="aviso">{p.msgVazio ?? "Nada encontrado."}</p>;
   return null;
 }

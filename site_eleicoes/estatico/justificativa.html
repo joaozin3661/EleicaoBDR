@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Justificativa dos dados · Eleições em Dados</title>
+<link rel="icon" href="data:," />
+<style>
+:root { --bg:#faf9f7; --surface:#fff; --text:#1c1b1a; --muted:#5f5d58; --border:#e2dfd8; --accent:#2a78d6; --code:#f0eeea; }
+@media (prefers-color-scheme: dark) { :root { --bg:#161513; --surface:#1e1d1b; --text:#ece9e3; --muted:#a8a49c; --border:#34322e; --accent:#6aa7ee; --code:#2a2825; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:16px/1.65 system-ui, "Segoe UI", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+.voltar { display:inline-block; margin-bottom:16px; color:var(--accent); text-decoration:none; font-size:14px; }
+h1 { font-size: 30px; line-height:1.2; margin: 8px 0 16px; }
+h2 { font-size: 22px; margin: 40px 0 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+h3 { font-size: 17px; margin: 24px 0 4px; }
+p, li { color: var(--text); }
+hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--code); padding: 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+.tabela { overflow-x: auto; margin: 12px 0; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--surface); }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<a class="voltar" href="./">← Voltar ao site</a>
+<h1>Justificativa dos dados e das decisões metodológicas</h1>
+<p>Projeto de Banco de Dados Relacional (UFPI): banco <code>eleicoes_v2</code> no PostgreSQL, com dados eleitorais do TSE de seis estados
+(AL, PA, PB, PR, SC e SE, 1.238 municípios). Este documento cobre as perguntas <strong>1, 2, 3, 4, 6, 8, 9 e 10</strong>, as já respondidas.
+Para cada uma: que dados foram usados e por quê, que decisões foram tomadas, o que foi conferido e o que ficou como limitação.</p>
+<p>Os números citados foram lidos do banco ou dos arquivos de carga durante a construção. As consultas que os produzem estão
+nos arquivos <code>views_*.sql</code> e aparecem no site, no botão &quot;Ver o SQL executado no banco&quot; de cada bloco.</p>
+<hr>
+<h2>1. Decisões que valem para todas as perguntas</h2>
+<h3>1.1 Por que o TSE</h3>
+<p>Todos os dados eleitorais vêm do Portal de Dados Abertos do TSE. É a fonte oficial e pública, publicada com um arquivo
+<code>leiame</code> que documenta cada campo, e traz o identificador <code>SQ_CANDIDATO</code>, que liga o mesmo candidato entre candidaturas, bens,
+receitas e despesas. Sem essa chave comum, cruzar patrimônio, financiamento e gastos com o resultado da eleição seria
+impossível. O IBGE entra só na tabela de correspondência entre o código de município do TSE e o do IBGE.</p>
+<h3>1.2 Recorte</h3>
+<ul>
+<li><strong>Geográfico:</strong> 6 estados, nas regiões Norte, Nordeste e Sul.</li>
+<li><strong>Temporal:</strong> 2018, 2020, 2022 e 2024 nas perguntas 1, 2, 8 e 9, que é o escopo definido pelo professor (&quot;E.P.&quot;). A pergunta 10
+usa os doze pleitos de 2002 a 2024, porque a carreira de um político só aparece em série longa, a pergunta 4 usa 2022 e 2024 (a pergunta pede essas duas eleições), e a pergunta 6 usa os seis pleitos
+municipais de 2004 a 2024, porque compara cada eleição com a anterior no mesmo município.</li>
+<li><strong>Presidente fica de fora.</strong> Esse cargo só existe no arquivo nacional, fora do recorte de seis estados.</li>
+</ul>
+<h3>1.3 Quem entra nas comparações</h3>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Regra</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Só candidaturas que chegaram a um resultado (eleito, não eleito ou suplente)</td>
+<td>Uma taxa de sucesso só faz sentido onde o resultado existe.</td>
+</tr>
+<tr>
+<td><strong>Eleito</strong> = todo resultado que começa com <code>ELEITO</code> (por QP, por média, direto)</td>
+<td>O TSE usa rótulos diferentes por ano. A carga padronizou &quot;MÉDIA&quot; para &quot;ELEITO POR MÉDIA&quot;, então um único critério vale em todos os anos.</td>
+</tr>
+<tr>
+<td><strong>Não eleito</strong> inclui os suplentes</td>
+<td>Suplente não assumiu a cadeira na eleição.</td>
+</tr>
+<tr>
+<td><strong>Vices e suplentes de senador ficam de fora</strong> nas perguntas 1, 2 e 8</td>
+<td>Disputam a mesma vaga do titular, e a receita e a despesa deles saem na conta do titular. Incluí-los contaria a cadeira duas vezes.</td>
+</tr>
+<tr>
+<td><strong>Quem não declarou nada conta como R$ 0</strong> (despesa, bem ou receita)</td>
+<td>Decisão tomada com o grupo. Declarar nada é uma informação real, e tirar esses candidatos tornaria a base mais &quot;limpa&quot; do que a realidade. Em todas as telas esse grupo aparece separado.</td>
+</tr>
+</tbody></table></div>
+<h3>1.4 Eleições suplementares e segundo turno</h3>
+<p>Os arquivos municipais misturam a eleição ordinária com eleições suplementares feitas meses ou anos depois. Elas foram descartadas
+(790 candidaturas na carga principal), porque repetiriam candidatos e vagas. Os bens, as receitas e as despesas dessas eleições não
+se ligam a nenhuma candidatura do banco e saem junto: 681 bens (2020) e 188 (2024); 968 receitas (2020) e 188 (2024).
+Quando o candidato disputou dois turnos, fica a linha do último, que traz o resultado final.</p>
+<h3>1.5 Identidade das pessoas</h3>
+<p>O título de eleitor não é uma chave confiável: a mesma pessoa aparece com títulos diferentes e pessoas diferentes aparecem com o
+mesmo título. A vistoria nos arquivos brutos mostrou:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Problema na fonte</th>
+<th>Casos</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pessoas com mais de um título</td>
+<td>486</td>
+</tr>
+<tr>
+<td>Títulos usados por pessoas diferentes</td>
+<td>166</td>
+</tr>
+<tr>
+<td>Candidaturas de 2024 com CPF oculto pelo TSE (valor <code>-4</code>)</td>
+<td>93.365, ou seja, todas</td>
+</tr>
+<tr>
+<td>CPF de 2024 recuperado de eleições anteriores</td>
+<td>45.517</td>
+</tr>
+<tr>
+<td>Mesma pessoa, duas candidaturas no mesmo ano (registro indeferido mais o válido)</td>
+<td>1.208 pares</td>
+</tr>
+</tbody></table></div>
+<p>Por isso <code>PESSOA</code> tem uma chave própria (<code>id_pessoa</code>). A carga agrupa pelo título, separa quem tem nome e nascimento diferentes,
+e une quem tem o mesmo CPF válido ou o mesmo nome, nascimento e UF de nascimento. Título e CPF originais ficam guardados na
+candidatura, sem alteração. O resultado são 359.408 pessoas para 569.184 candidaturas.</p>
+<h3>1.6 Por que o site lê views</h3>
+<p>As regras (o que é eleito, o que é público, o que é propaganda) estão escritas uma vez, no banco. O site só faz <code>SELECT</code>. As
+consultas que agregam milhões de linhas, como a soma de 2,1 milhões de despesas, são views materializadas e respondem em milissegundos.</p>
+<h3>1.7 Como os números foram conferidos</h3>
+<p>Nas perguntas 2, 8 e 9, os resultados foram <strong>recalculados de forma independente em Python (pandas)</strong> a partir dos arquivos brutos
+ou dos CSVs de carga, sem usar as views, e comparados com o que o banco devolve. Na Q2 e na Q9 isso foi feito por duas rodadas de
+verificadores separados, e os problemas apontados foram corrigidos. Na Q1, o resultado reproduz o número que o grupo já havia
+validado no início do trabalho.</p>
+<hr>
+<h2>2. Pergunta 1: quanto custa uma cadeira?</h2>
+<p><strong>Dados usados</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Tabela</th>
+<th>Origem no TSE</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>candidatura</code></td>
+<td><code>consulta_cand</code>: <code>DS_CARGO</code>, <code>DS_SIT_TOT_TURNO</code></td>
+<td>cargo, estado e resultado de cada candidato</td>
+</tr>
+<tr>
+<td><code>vaga</code></td>
+<td><code>consulta_vagas</code>: <code>QT_VAGA</code> (7.512 linhas)</td>
+<td>número de cadeiras em disputa</td>
+</tr>
+<tr>
+<td><code>despesa</code></td>
+<td>prestação de contas, despesas contratadas: <code>VR_DESPESA_CONTRATADA</code> (2.099.197 linhas)</td>
+<td>quanto cada campanha gastou</td>
+</tr>
+</tbody></table></div>
+<p><strong>Por que esses dados:</strong> custo da cadeira exige duas coisas, o gasto e o número de cadeiras. O número de vagas vem do próprio
+TSE; sem ele, só daria para comparar candidatos, não o custo de preencher uma vaga.</p>
+<p><strong>Decisões</strong></p>
+<ul>
+<li><strong>Resposta principal:</strong> gasto total de campanha do cargo ÷ vagas, por pleito e estado. O gasto dos derrotados entra, porque também faz
+parte do que custou preencher a cadeira. Resultado para deputado federal: R$ 1,7 a 2,6 mi por cadeira em 2018 e R$ 5,3 a 7,7 mi em 2022.</li>
+<li><strong>Leitura complementar:</strong> gasto por candidato de eleitos contra não eleitos, por <strong>média e mediana</strong>. Os totais isolados enganam, porque os
+grupos têm tamanhos muito diferentes. Para deputado federal em 2018: 92 eleitos gastaram em média R$ 1.058.181 contra
+R$ 104.948 dos 1.053 não eleitos (10,1×); pela mediana a razão sobe para 97,8×, porque a maioria dos derrotados gastou muito pouco.</li>
+<li><strong>Despesas contratadas, não só pagas:</strong> o que a campanha se comprometeu a gastar. É uma escolha do projeto e é declarada como limitação.</li>
+</ul>
+<p><strong>Limitações:</strong> os valores são despesas contratadas, não necessariamente pagas. Em 2022, 0,8% do valor das despesas (R$ 8,1 mi)
+está em linhas totalmente idênticas; pode ser item repetido legítimo ou duplicata, e o arquivo não permite distinguir.</p>
+<hr>
+<h2>3. Pergunta 2: taxa de sucesso por patrimônio declarado</h2>
+<p><strong>Dados usados</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Tabela</th>
+<th>Origem no TSE</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bem_declarado</code></td>
+<td>bens de candidatos: <code>VR_BEM_CANDIDATO</code>, <code>DS_TIPO_BEM_CANDIDATO</code> (442.621 bens, R$ 58,08 bi)</td>
+<td>patrimônio de cada candidato</td>
+</tr>
+<tr>
+<td><code>candidatura</code></td>
+<td>mesma da Q1</td>
+<td>resultado</td>
+</tr>
+</tbody></table></div>
+<p><strong>Por que esses dados:</strong> o patrimônio é declarado pelo próprio candidato ao registrar a candidatura, e o TSE o publica por candidato. É a
+única fonte oficial de patrimônio individual. Cerca de <strong>100% dos bens de eleições ordinárias se ligam a uma candidatura</strong> do banco
+pelo <code>SQ_CANDIDATO</code>, e os bens e valores do banco batem com os do arquivo bruto até o centavo.</p>
+<p><strong>Decisões</strong></p>
+<ul>
+<li><strong>Patrimônio = soma dos bens da candidatura.</strong> Quem não declarou bem tem R$ 0 e forma um grupo próprio: 36,2% dos vereadores de 2024 e
+33,9% dos candidatos a deputado federal de 2022.</li>
+<li><strong>Sempre dentro de um cargo.</strong> O patrimônio típico de um vereador (mediana de R$ 99 mil entre os eleitos em 2024) e o de um
+governador estão em escalas diferentes, e misturá-los criaria uma associação falsa só pela diferença de cargo.</li>
+<li><strong>Duas leituras:</strong> (a) faixas fixas em reais, com limites em escala aproximadamente logarítmica, de R$ 50 mil a R$ 5 mi; (b) quintos
+dentro do cargo, entre quem declarou algum bem, que comparam ricos e pobres de cada disputa.</li>
+<li><strong>Mediana, nunca média.</strong> A base contém declarações absurdas, como uma casa de R$ 1 bilhão e um patrimônio de R$ 2,4 bi para um vereador.
+O TSE publica o dado como veio; alterá-lo seria inventar informação. A mediana não é afetada por esses casos.</li>
+<li><strong>Desempate nos quintos</strong> pelo identificador da candidatura, para o resultado ser o mesmo a cada atualização.</li>
+<li><strong>Quintos escondidos quando algum grupo tem menos de 20 candidatos</strong> (governador e senador por estado têm 1 ou 2 por grupo), porque
+taxas de 0% ou 100% sobre um candidato não significam nada. Nesses casos a tela mostra só as faixas.</li>
+</ul>
+<p><strong>Resultado:</strong> deputado federal 2022: 0,7% de eleitos entre quem não declarou bens e 22,4% no quinto mais rico (33,4×). Vereador 2024: 9,0%
+contra 24,4% (2,7×). Há exceções, e a tela as mostra: em prefeito de Sergipe em 2020, quem não declarou bens se elegeu mais (35,1%) que o quinto mais rico (28,2%).</p>
+<p><strong>Limitações:</strong> candidatos com registro indeferido que foram à urna contam como não eleitos. Em 2024 o TSE não publica a situação da
+candidatura, então não dá para separá-los em todos os anos. Nos anos em que dá (2018 e 2022, deputados), tirá-los sobe a taxa de sucesso
+em 0,3 a 0,5 ponto percentual (deputado federal 2022: 5,2% com eles, 5,5% sem).
+O patrimônio é autodeclarado.</p>
+<hr>
+<h2>4. Pergunta 3: municípios mais desenvolvidos votam e elegem diferente?</h2>
+<p><strong>Recorte.</strong> Só há IDHM municipal e Censo de 2010. Por isso a pergunta foi respondida para as <strong>eleições municipais de 2008 e 2012</strong>, as duas que cercam 2010,
+e os índices de 2010 valem como retrato do município nas duas. Não foi feita versão estadual ou nacional: deputado, governador e senador não pertencem a um
+município, então não há como ligá-los a um índice municipal sem inventar uma regra de distribuição. O custo do recorte é declarado na tela: 2008 vem
+dois anos antes do retrato e 2012, dois anos depois.</p>
+<p><strong>Dados.</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>O quê</th>
+<th>Fonte</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IDHM 1991, 2000 e 2010</td>
+<td>Atlas do Desenvolvimento Humano (já carregado)</td>
+<td>só 2010 é usado na pergunta</td>
+</tr>
+<tr>
+<td>PIB municipal 2010</td>
+<td>IBGE, SIDRA tabela 5938</td>
+<td>em mil reais; 5.565 municípios</td>
+</tr>
+<tr>
+<td>População 2010</td>
+<td>IBGE, SIDRA tabela 202 (Censo)</td>
+<td>5.565 municípios</td>
+</tr>
+<tr>
+<td>PIB per capita</td>
+<td>calculado: PIB x 1.000 / população</td>
+<td></td>
+</tr>
+<tr>
+<td>Eleitores aptos, comparecimento, abstenção, brancos e nulos</td>
+<td>TSE, detalhe da votação por município</td>
+<td>1º turno, cargo de prefeito, 2008 e 2012 (4.963 linhas); eleições suplementares removidas por janela de 0 a 28 dias</td>
+</tr>
+<tr>
+<td>Partidos dos eleitos</td>
+<td>tabela <code>candidatura</code></td>
+<td>prefeito e vereador, <code>situacao_resultado</code> começando por ELEITO</td>
+</tr>
+</tbody></table></div>
+<p><strong>Decisões.</strong></p>
+<ol>
+<li><strong>Isentos</strong> = abstenções + votos em branco + votos nulos, como percentual dos eleitores aptos. A pergunta fala em &quot;comportamento do eleitor&quot;; os três
+componentes são mostrados separados, porque se movem em sentidos diferentes (abaixo).</li>
+<li><strong>Grupos de município.</strong> IDHM pelas cinco faixas oficiais do Atlas (muito baixo abaixo de 0,500; baixo; médio; alto; muito alto a partir de 0,800).
+PIB per capita em quartis calculados sobre os 1.235 municípios que têm os dois índices. Os grupos extremos do IDHM são pequenos (10 e 13 municípios), e a tela avisa.</li>
+<li><strong>Taxas agregadas, não média de taxas.</strong> O percentual de um grupo é a soma dos votos do grupo sobre a soma dos aptos, de modo que um município de 3 mil eleitores
+não pesa o mesmo que uma capital.</li>
+<li><strong>Correlação</strong> de Pearson entre o índice e a taxa de cada município. Para o PIB usa-se o logaritmo do PIB per capita, pela distribuição muito assimétrica.
+É associação entre municípios, não causa, e a tela diz isso.</li>
+<li><strong>Partidos.</strong> Contagem de eleitos por grupo, com participação do partido no grupo. Sigla do partido na época da eleição.</li>
+</ol>
+<p><strong>Anomalia encontrada: votação anulada.</strong> O TSE conta como &quot;nulos&quot; os votos dados a candidatos cujo registro foi indeferido. Em alguns municípios isso
+produz percentuais de nulos muito acima do normal (de 12,8% a 59,1% dos aptos em 2008; de 10,1% a 84,7% em 2012), que não refletem o comportamento do eleitor e
+distorcem qualquer média. Hipótese testada: nos municípios com nulos atípicos, 89% (2008) e 69% (2012) tinham candidato a prefeito com registro indeferido,
+contra 6% e 4% nos demais. A marcação é objetiva e sem corte escolhido a olho: município é sinalizado quando o percentual de nulos fica acima de
+<strong>Q3 + 3 x (Q3 - Q1)</strong> da própria eleição (a cerca externa de Tukey). Resultado: <strong>84 de 1.235 municípios em 2008 e 67 em 2012</strong>. Eles ficam fora das medidas
+de isentos, abstenção, brancos, nulos e das correlações dessas medidas, e entram na relação eleitores/população e na contagem de partidos, que não dependem dos votos.
+A tabela da tela mostra a coluna &quot;Sem votação anulada&quot; com o tamanho real de cada grupo.</p>
+<p><strong>Ajuste no modelo.</strong> A restrição <code>ck_totalizacao_soma</code> exigia aptos = comparecimento + abstenções exatamente. Em 2012 há linhas do TSE em que a soma
+difere em 1 ou 2 eleitores (Aracaju, por exemplo). A restrição passou a tolerar diferença de até 10, e a carga mantém os números como o TSE publicou, em vez de
+descartar o município. O <code>importar_q3.py</code> aplica a mudança também ao banco já existente.</p>
+<p><strong>Municípios fora.</strong> Três municípios do banco não têm IDHM ou PIB de 2010 (criados depois do Censo) e ficam de fora; sobram <strong>1.235</strong> em cada eleição.</p>
+<p><strong>Resultados</strong> (6 estados, valores já excluindo votação anulada).</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Medida</th>
+<th>2008</th>
+<th>2012</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Isentos nos municípios de IDHM muito baixo, baixo, médio, alto, muito alto</td>
+<td>24,3%, 21,4%, 19,4%, 18,7%, 19,4%</td>
+<td>24,0%, 19,5%, 19,4%, 20,0%, 20,0%</td>
+</tr>
+<tr>
+<td>Correlação IDHM x isentos</td>
+<td>-0,40</td>
+<td>-0,24</td>
+</tr>
+<tr>
+<td>Correlação IDHM x votos nulos</td>
+<td>-0,59</td>
+<td>-0,47</td>
+</tr>
+<tr>
+<td>Correlação IDHM x abstenção</td>
+<td>-0,34</td>
+<td>-0,20</td>
+</tr>
+<tr>
+<td>Correlação IDHM x votos em branco</td>
+<td>+0,08</td>
+<td>+0,09</td>
+</tr>
+<tr>
+<td>Correlação IDHM x eleitores/população</td>
+<td>+0,15</td>
+<td>+0,22</td>
+</tr>
+<tr>
+<td>Correlação PIB per capita x isentos</td>
+<td>-0,34</td>
+<td>-0,27</td>
+</tr>
+</tbody></table></div>
+<p>Leitura: municípios menos desenvolvidos têm mais isentos, mas o efeito vem da <strong>abstenção e dos nulos</strong>; o voto em branco sobe levemente com o desenvolvimento
+(correlação positiva, fraca). A relação entre eleitores e habitantes é de 55 por 100 no IDHM muito baixo e cerca de 70 nos demais em 2012, refletindo a estrutura etária
+(mais crianças, menos eleitores), não a participação. Nos partidos, o PMDB é o que mais elege prefeitos e vereadores no conjunto; em 2012 a participação dele entre os prefeitos
+vai de 20% no IDHM muito baixo a 38% no muito alto, e o PT elege proporcionalmente mais nos municípios menos desenvolvidos.</p>
+<p><strong>Verificação independente.</strong> Um script em pandas, lendo os CSVs de carga e sem passar pelas views, recalculou os agrupamentos por IDHM e por PIB em 2008 e 2012, quatro
+correlações e as contagens de partidos (prefeito 2012 por IDHM; vereador 2008 por PIB). Resultado: <strong>0 divergências</strong>.</p>
+<p><strong>Limitações da Q3.</strong> Índices de 2010 aplicados a 2008 e 2012; municípios criados depois de 2010 ausentes; marcação de votação anulada é uma regra estatística (acerta
+a maioria dos casos com indeferimento, mas não é uma lista oficial); sem recorte estadual ou nacional por falta de ligação com município.</p>
+<hr>
+<h2>5. Pergunta 4: escolaridade de quem se candidata, de quem se elege e de quem vota</h2>
+<p><strong>A pergunta tem duas partes.</strong> (1) O grau de instrução do candidato se relaciona à chance de ser eleito? (2) Municípios de menor escolaridade
+tendem a eleger candidatos de escolaridade semelhante à do seu eleitorado? Escopo: 2022 e 2024.</p>
+<p><strong>Dados usados</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Tabela</th>
+<th>Origem no TSE</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>candidatura</code></td>
+<td><code>consulta_cand</code>: <code>DS_GRAU_INSTRUCAO</code> (preenchido em todas as candidaturas de 2022 e 2024)</td>
+<td>escolaridade do candidato</td>
+</tr>
+<tr>
+<td><code>eleitorado</code></td>
+<td>perfil de comparecimento e abstenção: <code>QT_APTOS</code> por município, faixa etária e grau de escolaridade (680.519 linhas, 2018 a 2024)</td>
+<td>escolaridade do eleitorado</td>
+</tr>
+</tbody></table></div>
+<h3>4.1 Por que esses dados</h3>
+<p>O perfil do eleitorado do TSE usa <strong>os mesmos graus de escolaridade dos candidatos</strong> (analfabeto, lê e escreve, fundamental, médio e superior,
+completos e incompletos), o que permite comparar candidato e eleitor diretamente, sem converter categorias. Outra fonte, como o nível de instrução do
+Censo do IBGE, tem faixas diferentes, é de uma só data e cobre moradores e não eleitores. O arquivo vem aberto por zona, gênero, estado civil, cor e
+outras dimensões que o modelo não usa; somar tudo dá a mesma população apta (27.136.743 aptos em 2022 e 27.914.914 em 2024 nos 6 estados, conferidos
+contra o arquivo bruto). A tabela <code>eleitorado</code> foi carregada para os quatro pleitos (2018 a 2024), porque também serve às perguntas 3 e 6.</p>
+<h3>4.2 Decisões</h3>
+<ul>
+<li><strong>Só o 1º turno.</strong> O perfil dos aptos é o mesmo nos dois turnos, e o arquivo de 2022 repete o 1º turno como &quot;2º turno&quot;; carregar os dois contaria cada
+eleitor em dobro.</li>
+<li><strong>Escala de anos de estudo equivalentes</strong> para tirar médias: fundamental incompleto 5, completo 9, médio incompleto 10, completo 12, superior incompleto 14
+e superior completo 16 (analfabeto 0, lê e escreve 2). É uma convenção nossa, declarada na tela, e as conclusões não dependem dela: os percentuais por
+grau são mostrados ao lado.</li>
+<li><strong>Fora da comparação:</strong> &quot;não informado&quot; (eleitor, 0,00% a 0,02%) e &quot;não divulgável&quot; (candidato, 1 caso em 2024).</li>
+<li><strong>Analfabeto aparece só no eleitorado</strong> (3,8% a 4,3%): nenhum candidato declarou esse grau, e o grupo foi mantido nos gráficos para a distribuição do
+eleitorado somar 100%.</li>
+<li><strong>Parte 2 só para 2024, em nível de município.</strong> Em eleição municipal, prefeito e vereador pertencem a um município e dá para comparar município a
+município. Em 2022 os eleitos são deputados, governador e senador, que representam o estado; ali a comparação é entre o eleitorado do estado e os
+eleitos do estado. Fazer por município em 2022 exigiria os votos de cada candidato por município (arquivos de 4 GB) para medir a escolaridade dos
+votados, e não foi feito.</li>
+<li><strong>Grupos de município</strong> pelos quartis da escolaridade média do eleitorado nos 1.238 municípios (1º quarto = eleitorado menos escolarizado). Ao escolher
+um estado, só mudam os municípios mostrados, não os cortes.</li>
+</ul>
+<h3>4.3 O que os dados mostram</h3>
+<p><strong>Parte 1: só o superior completo se destaca.</strong> Vereador 2024: superior completo se elege 20,1% das vezes contra 13,4% dos demais candidatos (1,5×); entre os
+outros graus a taxa varia pouco e sem ordem (12,0% no fundamental incompleto, 12,5% no completo, 10,0% no médio incompleto, 14,9% no médio completo).
+Deputado federal 2022: 6,9% contra 2,3% (3,0×).</p>
+<p><strong>Quem vota, quem se candida, quem se elege.</strong> O eleitorado é muito menos escolarizado que os eleitos:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th></th>
+<th>Eleitorado</th>
+<th>Candidatos</th>
+<th>Eleitos</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vereador 2024, com superior completo</td>
+<td>10,8%</td>
+<td>27,3%</td>
+<td>36,0%</td>
+</tr>
+<tr>
+<td>Deputado federal 2022, com superior completo</td>
+<td>10,8%</td>
+<td>63,0%</td>
+<td>83,7%</td>
+</tr>
+<tr>
+<td>Vereador 2024, escolaridade média (anos de estudo equivalentes)</td>
+<td>9,2</td>
+<td></td>
+<td>12,5</td>
+</tr>
+<tr>
+<td>Deputado federal 2022, escolaridade média</td>
+<td>9,1</td>
+<td></td>
+<td>15,4</td>
+</tr>
+</tbody></table></div>
+<p>Até o fundamental completo estão 41,1% do eleitorado (2024), mas só 19,6% dos vereadores eleitos; em 2022, 43,2% do eleitorado e 2,2% dos deputados federais eleitos.</p>
+<p><strong>Parte 2: a relação existe e é moderada para vereador.</strong> Quanto mais escolarizado o eleitorado do município, mais escolarizados os vereadores eleitos
+(correlação 0,47; cada ano de estudo a mais no eleitorado vai com 0,59 ano a mais nos eleitos). Nos municípios de eleitorado menos escolarizado, 27,6% dos
+vereadores eleitos têm superior completo; nos de eleitorado mais escolarizado, 49,9%. Para prefeito a correlação é fraca (0,15). Mas em <strong>todos os grupos</strong> os
+eleitos são mais escolarizados que o eleitorado (cerca de 4 anos de estudo equivalentes a mais): o eleitorado &quot;parecido com o eleito&quot; não existe em nenhum grupo.</p>
+<h3>4.4 Conferência</h3>
+<p>Taxa de sucesso por grau em quatro combinações, a distribuição eleitorado, candidatos e eleitos em três, os grupos de município e a correlação foram recalculados
+em pandas a partir dos CSVs, sem usar as views, <strong>sem nenhuma diferença</strong>.</p>
+<p><strong>Limitações:</strong> a escolaridade do candidato é autodeclarada. A do eleitor é a do cadastro eleitoral, que pode estar desatualizada. A associação entre estudo e
+eleição não é causal: quem tem mais estudo também tende a ter mais patrimônio, mais estrutura de campanha e partidos maiores (a tela diz isso). A parte 2 não
+foi feita por município em 2022.</p>
+<hr>
+<h2>6. Pergunta 6: a idade do município se reflete em quem ele elege?</h2>
+<p><strong>A pergunta:</strong> se a estrutura etária do município se reflete em quem ele elege: classificar cada município como mais jovem ou mais
+envelhecido, ver a idade média dos eleitos ali e observar se há tendência de alternância de poder entre os pleitos.</p>
+<p><strong>Dados usados</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Tabela</th>
+<th>Origem</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>indicador_municipal</code></td>
+<td>IBGE, Censo 2022, SIDRA tabela 9515: idade mediana e índice de envelhecimento (1.238 municípios)</td>
+<td>classificar o município</td>
+</tr>
+<tr>
+<td><code>candidatura</code></td>
+<td>prefeitos e vereadores eleitos nos pleitos municipais de 2004 a 2024 (cargo, partido da época, município, resultado)</td>
+<td>quem foi eleito e por qual partido</td>
+</tr>
+<tr>
+<td><code>pessoa</code></td>
+<td>data de nascimento declarada ao TSE (99,96% a 100% dos eleitos têm)</td>
+<td>idade do eleito</td>
+</tr>
+</tbody></table></div>
+<h3>5.1 Por que esses dados</h3>
+<p>O IBGE é a fonte oficial de idade mediana por município, e a tabela 9515 cobre <strong>os 1.238 municípios sem nenhum faltando</strong>. O índice de
+envelhecimento (idosos para cada 100 jovens) também veio e tem correlação de 0,95 com a idade mediana; foi usada a idade mediana por ser
+mais fácil de explicar. A idade do eleito vem da data de nascimento que o próprio candidato declara no registro, a mesma base que já usamos
+na pergunta 10. Como o banco já tinha 6 pleitos municipais de prefeito e vereador, a análise de alternância usa <strong>cinco comparações entre
+pleitos consecutivos</strong> (2004→2008 até 2020→2024), mais do que os pleitos pedidos.</p>
+<h3>5.2 Decisões</h3>
+<ul>
+<li><strong>Quatro grupos pelos quartis da idade mediana</strong> (cortes em 32, 35 e 37 anos: 339, 364, 235 e 300 municípios). Os quartis dividem
+em grupos de tamanho parecido sem escolher cortes à mão; como a idade mediana é um número inteiro, há empates e os grupos não ficam
+exatamente iguais.</li>
+<li><strong>O grupo etário é de 2022 e vale para todos os pleitos.</strong> O IBGE só publica a idade mediana por município no Censo de 2022. Isso é uma
+caracterização estrutural do município (um município jovem em 2022 provavelmente já era mais jovem que a média em 2004), não uma medida da
+época de cada eleição. A tela e o dossiê declaram essa limitação.</li>
+<li><strong>Só pleitos municipais.</strong> Em 2018 e 2022 os eleitos são deputados, governadores e senadores, que não pertencem a um município; por isso esses
+anos não entram na Q6.</li>
+<li><strong>Idade do eleito</strong> = anos completos em 1º de outubro do ano da eleição, calculada com a data de nascimento.</li>
+<li><strong>Alternância pela linhagem do partido, e não pelo número.</strong> Comparar o partido do prefeito com o do pleito anterior parece simples, mas o
+número do partido é reaproveitado (o 44 era o PRP até 2016 e hoje é o União; o 25 era o DEM e hoje é o PRD), e a sigla muda por renomeação ou
+fusão. Sem tratar isso, 22 municípios que passaram de DEM para União em 2024 contariam como troca de partido. As renomeações e fusões
+conhecidas (PMDB→MDB; PFL, DEM e PSL→União; PTB, Patriota e PRP→PRD; PROS→Solidariedade; PSC e PHS→Podemos; entre outras) foram tratadas
+como o mesmo partido, em uma lista de 28 siglas no <code>views_q6.sql</code>.</li>
+<li><strong>Três medidas de alternância:</strong> o partido mudou, o prefeito mudou, e a taxa de reeleição <strong>entre os que tentaram</strong> (a lei limita a duas
+eleições seguidas, então só quem concorreu entra no denominador).</li>
+</ul>
+<h3>5.3 O que os dados mostram</h3>
+<p>O resultado principal é uma <strong>relação fraca</strong>:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th></th>
+<th>Município mais envelhecido × mais jovem</th>
+<th>Correlação</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vereador 2024</td>
+<td>eleitos 46,4 contra 44,5 anos (+1,9)</td>
+<td>0,23 (fraca)</td>
+</tr>
+<tr>
+<td>Prefeito 2024</td>
+<td>eleitos 50,7 contra 48,5 anos (+2,2)</td>
+<td>0,05 (praticamente nenhuma)</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>Vereadores:</strong> nos municípios mais envelhecidos, 11,4% dos eleitos têm 60 anos ou mais, contra 7,2% nos mais jovens. A correlação sobe de 0,10 (2004)
+para 0,23 (2016 a 2024).</li>
+<li><strong>Prefeitos:</strong> a diferença entre os grupos existe, mas a correlação município a município fica entre 0,04 e 0,08 em todos os pleitos: a idade do
+município explica quase nada da idade de quem governa.</li>
+<li><strong>Os eleitos ficaram mais velhos em todos os grupos:</strong> prefeitos de 46,1 anos (2004) para 49,7 (2024); vereadores de 41,8 para 45,3. Esse efeito
+do tempo é maior que a diferença entre grupos de município.</li>
+<li><strong>Alternância:</strong> o partido do prefeito mudou em 60,0% dos municípios em 2008, 66,9% em 2012, 72,3% em 2016, 69,7% em 2020 e 65,7% em 2024. Entre
+os grupos etários não há padrão consistente: a ordem entre eles muda de um pleito para o outro.</li>
+<li><strong>Reeleição:</strong> em 2024, metade dos prefeitos (50,4%) concorreu de novo e 81,2% dos que concorreram venceram.</li>
+</ul>
+<h3>5.4 Conferência</h3>
+<p>Quatro combinações de idade dos eleitos (prefeito e vereador, em anos diferentes), duas correlações e a alternância de dois pleitos foram
+recalculadas em pandas a partir dos CSVs, sem usar as views, <strong>sem nenhuma diferença</strong>.</p>
+<p><strong>Limitações:</strong> a idade mediana é de 2022. A lista de linhagens partidárias é uma decisão nossa e é estática (trata como um só partido os que se
+fundiram, o que pode subestimar um pouco a alternância, por exemplo uma troca entre dois partidos que depois se fundiram). Em cada pleito, 6 a 14
+municípios não têm prefeito eleito nos dados (eleição anulada ou sem resultado) e ficam fora da comparação. A data de nascimento é autodeclarada. A
+correlação fraca é um resultado, mas é um resultado sobre associação, não sobre causa.</p>
+<hr>
+<h2>7. Pergunta 8: recursos públicos ou privados, quem se elege?</h2>
+<p><strong>A pergunta:</strong> se candidatos financiados majoritariamente por repasses públicos têm desempenho diferente dos sustentados por doações
+privadas e recursos próprios.</p>
+<p><strong>Dados usados</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Tabela</th>
+<th>Origem no TSE</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>receita</code></td>
+<td>receitas de candidatos: <code>DS_FONTE_RECEITA</code>, <code>DS_ORIGEM_RECEITA</code>, <code>DS_NATUREZA_RECEITA</code>, <code>VR_RECEITA</code> (969.901 linhas, R$ 3,62 bi)</td>
+<td>quanto cada campanha arrecadou e de onde</td>
+</tr>
+<tr>
+<td><code>candidatura</code></td>
+<td>mesma da Q1</td>
+<td>resultado</td>
+</tr>
+</tbody></table></div>
+<h3>6.1 Por que a fonte da receita define &quot;público&quot;</h3>
+<p>O TSE classifica cada receita em três <strong>fontes</strong>: <strong>Fundo Especial de Financiamento de Campanha (FEFC)</strong>, <strong>Fundo Partidário</strong> e <strong>Outros
+Recursos</strong>. Os dois primeiros são dinheiro público; o terceiro reúne tudo que é privado. Usar esse campo é a leitura mais direta e
+mais defensável, porque a classificação é do próprio TSE e não nossa.</p>
+<p>Isso resolve o ponto mais delicado da pergunta, o <strong>repasse do partido ao candidato</strong>. O partido é um intermediário: o dinheiro que ele
+repassa pode ser público ou privado. O TSE já marca isso na fonte. Em 2022, dos R$ 844,9 mi de dinheiro público que chegaram aos
+candidatos, quase tudo veio por repasse do partido (R$ 734,8 mi em FEFC e R$ 80,3 mi em Fundo Partidário), e todos aparecem como públicos. O que o
+partido repassa de outras fontes, suas doações privadas, aparece como &quot;Outros Recursos&quot; e fica como privado.</p>
+<h3>6.2 Alternativa considerada e descartada: o arquivo de &quot;doador originário&quot;</h3>
+<p>O TSE publica também um arquivo de doador originário. Ele foi baixado e inspecionado, e <strong>não foi usado</strong>, porque só traz o nome e o
+CNPJ/CPF dos doadores privados por trás de uma parte pequena dos repasses; não diz se o dinheiro era público. Como a classificação
+público/privado já está na fonte da receita, carregá-lo não mudaria a resposta e acrescentaria uma tabela sem uso.</p>
+<h3>6.3 Como cada candidato é classificado</h3>
+<p>Cada candidato entra numa faixa pela <strong>parte do que arrecadou que era dinheiro público</strong>: sem receita declarada; nenhum dinheiro público;
+menos de 25%; 25% a 50%; 50% a 75%; 75% a 99%; 100% público. Foram usadas faixas e não apenas &quot;público ou privado&quot;, porque os dados mostraram
+que a relação <strong>não é linear</strong>: dividir só em dois grupos esconderia justamente o padrão mais interessante.</p>
+<h3>6.4 O que os dados mostram</h3>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Vereador 2024</th>
+<th>Candidatos</th>
+<th>Taxa de sucesso</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sem receita declarada</td>
+<td>7.762</td>
+<td>3,4%</td>
+</tr>
+<tr>
+<td>Nenhum dinheiro público</td>
+<td>30.066</td>
+<td>17,5%</td>
+</tr>
+<tr>
+<td>Menos de 25% público</td>
+<td>4.656</td>
+<td><strong>28,7%</strong></td>
+</tr>
+<tr>
+<td>25% a 50%</td>
+<td>5.082</td>
+<td>22,8%</td>
+</tr>
+<tr>
+<td>50% a 75%</td>
+<td>7.005</td>
+<td>18,3%</td>
+</tr>
+<tr>
+<td>75% a 99%</td>
+<td>12.243</td>
+<td>14,5%</td>
+</tr>
+<tr>
+<td>100% público</td>
+<td>16.305</td>
+<td><strong>9,7%</strong></td>
+</tr>
+</tbody></table></div>
+<p>Quem depende só de dinheiro público tem a menor taxa de sucesso, e quem combina pouco dinheiro público com outras fontes tem a maior.
+Em deputado federal 2022 o padrão se repete: 20,0% com menos de 25% de dinheiro público e 0,6% com 100%. Quem não declarou nenhuma
+receita praticamente não se elege (3,4% entre vereadores em 2024; nenhum dos 135 candidatos a deputado federal em 2022).</p>
+<p>O peso do dinheiro público na arrecadação total (todos os candidatos, 6 estados) cresceu e variou ao longo dos pleitos:</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Ano</th>
+<th>Arrecadação total</th>
+<th>Parte pública (FEFC + Fundo Partidário)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2018</td>
+<td>R$ 532,9 mi</td>
+<td>69,6%</td>
+</tr>
+<tr>
+<td>2020</td>
+<td>R$ 717,2 mi</td>
+<td>51,3%</td>
+</tr>
+<tr>
+<td>2022</td>
+<td>R$ 1.053,0 mi</td>
+<td>80,2%</td>
+</tr>
+<tr>
+<td>2024</td>
+<td>R$ 1.319,3 mi</td>
+<td>73,1%</td>
+</tr>
+</tbody></table></div>
+<h3>6.5 Decisões e cuidados</h3>
+<ul>
+<li><strong>Doações em bens e serviços (estimáveis) entram.</strong> São R$ 388,3 mi de R$ 3.622 mi (10,7%); excluí-las ignoraria uma parte real do financiamento.</li>
+<li><strong>Recursos recebidos de outros candidatos</strong> contam como públicos quando a fonte original é um dos fundos, e como privados nos demais casos.</li>
+<li><strong>A associação não prova causalidade.</strong> Os partidos distribuem o fundo conforme a chance de vitória de cada candidato, e quem depende só dele
+costuma ser candidato de partido pequeno ou sem estrutura própria. A tela diz isso na própria página.</li>
+<li><strong>Linhas descartadas na carga:</strong> as de <code>SQ_RECEITA = -1</code> (candidato sem receita, valor zero): 377 em 2018, 16.139 em 2020, 517 em 2022 e
+8.991 em 2024. Eles reaparecem na análise, corretamente, como &quot;sem receita declarada&quot;.</li>
+<li><strong><code>SQ_RECEITA</code> não é único.</strong> Várias linhas dividem o mesmo código, quase todas &quot;FINAL + FINAL&quot; e com <strong>valores diferentes</strong> (em 84% dos
+casos), ou seja, linhas distintas e não a mesma receita contada duas vezes. Somam 0,5% do total. Todas foram mantidas, com um identificador
+novo por linha, e o código original ficou guardado em <code>sq_receita</code>.</li>
+<li><strong>Os nomes dos campos do TSE são confusos.</strong> <code>DS_FONTE_RECEITA</code> diz de onde vem o recurso (fundo ou outros), e <code>DS_ORIGEM_RECEITA</code> diz quem é o
+doador (pessoa física, partido, próprio candidato). Na tabela, <code>origem_recurso</code> guarda a primeira e <code>tipo_doador</code> a segunda.</li>
+</ul>
+<h3>6.6 Conferência</h3>
+<p>Quatro disputas (vereador 2024, deputado federal 2022, prefeito do Pará 2020 e senador 2018) foram recalculadas em pandas a partir dos CSVs, sem usar
+as views: candidatos por faixa, eleitos, receita total, parte pública e as duas taxas &quot;majoritariamente&quot;, <strong>sem nenhuma diferença</strong>. A soma das
+receitas por fonte em 2022 no banco (R$ 763,1 mi, R$ 81,8 mi e R$ 208,1 mi) é igual à do arquivo bruto.</p>
+<p><strong>Limitações:</strong> a classificação segue a do TSE; se o TSE registrar uma receita na fonte errada, o erro se propaga. O total das views (R$ 3.587,7 mi) é
+menor que o da tabela (R$ 3.622,4 mi) porque as views só contam candidatos elegíveis, sem vices e suplentes de senador.</p>
+<hr>
+<h2>8. Pergunta 9: onde o candidato investe em propaganda?</h2>
+<p><strong>Dados usados:</strong> a tabela <code>despesa</code> (a mesma da Q1), com <code>tipo_despesa</code> (41 categorias do TSE) e <code>descricao</code> (texto livre escrito pelo
+candidato, preenchido em 99% das despesas).</p>
+<p><strong>Por que esses dados:</strong> é a única fonte que descreve o que cada gasto foi. A categoria dá a classificação oficial; a descrição dá o detalhe que
+a categoria não dá (o tipo de material impresso, o nome da rede social).</p>
+<p><strong>Decisões</strong></p>
+<ul>
+<li><strong>Agrupamento em canais.</strong> As 41 categorias foram reunidas em quatro canais de propaganda (impressos e adesivos; rádio, TV, vídeo e som; internet;
+militância, comícios e eventos) e dois grupos que não são propaganda (estrutura da campanha e outras despesas). O agrupamento é nosso, mas cada
+categoria do TSE vai inteira para um grupo, e a tela mostra a categoria original ao lado do grupo. Todas as 41 categorias foram conferidas uma a uma.</li>
+<li><strong>A nuvem de palavras é calculada no banco</strong>, não no site: as descrições são quebradas em palavras, uma palavra conta uma vez por despesa, e
+plurais e grafias alternativas são unificados (ADESIVOS e ADESIVO, BOTONS e BOTTONS). Palavras vazias (artigos, cargos, códigos de documento, tarifas
+bancárias) saem. A lista de exclusões e de sinônimos está escrita no <code>views_q9.sql</code>.</li>
+<li><strong>Duas leituras:</strong> só despesas de propaganda, ou todas as despesas.</li>
+</ul>
+<p><strong>Resultado:</strong> em 2024, 53,1% do gasto foi para propaganda, e metade disso em impressos e adesivos. A internet ainda é pequena (8,3% da propaganda
+em 2024). Nas descrições de vereador em 2024, as palavras mais frequentes são ADESIVO, SANTINHO, MILITÂNCIA, PERFURADO e RUA.</p>
+<p><strong>Conferência:</strong> o total das categorias (R$ 3.292.637.753,14) é igual ao total da tabela <code>despesa</code>, e o top 100 da nuvem foi reproduzido em Python.</p>
+<p><strong>Limitações:</strong> a nuvem usa texto digitado pelos candidatos, então ainda sobram algumas abreviações e nomes próprios. O mesmo ponto das despesas
+repetidas da Q1 vale aqui.</p>
+<hr>
+<h2>9. Pergunta 10: sobrevivência da carreira de um político</h2>
+<p><strong>Dados usados:</strong> as candidaturas de todos os doze pleitos (2002 a 2024), ligadas à <code>pessoa</code>, com cargo, partido da época, local e resultado.</p>
+<p><strong>Por que esses dados:</strong> a pergunta pede a trajetória de uma pessoa ao longo do tempo, e isso só existe se a mesma pessoa for reconhecida em
+eleições diferentes. Por isso a pergunta justifica a separação entre <code>PESSOA</code> e <code>CANDIDATURA</code> e todo o trabalho de identidade da seção 1.5. Um terço
+das pessoas (116.335 de 359.408) disputou mais de uma eleição, e três disputaram as doze.</p>
+<p><strong>Decisões</strong></p>
+<ul>
+<li><strong>Sigla do partido guardada na candidatura</strong>, porque os partidos mudam de nome (PMDB virou MDB, PFL virou DEM). Assim a linha do tempo mostra o partido da época.</li>
+<li><strong>Nome de cada eleição guardado</strong>, além do nome mais recente da pessoa. Sem isso, quem mudou de nome (por casamento ou nome social) não seria achada pelo nome antigo. A
+busca ignora acentos.</li>
+<li><strong>Reeleição</strong> = eleito para o mesmo cargo no pleito seguinte a um mandato (4 anos; 8 para senador). Troca de partido e de cargo são marcadas comparando cada
+candidatura com a anterior da mesma pessoa.</li>
+<li><strong>Registros repetidos no mesmo ano</strong> (um indeferido e o válido) são unidos: fica o que tem resultado. Os demais continuam na tabela <code>candidatura</code>.</li>
+<li><strong>A consulta é feita por pessoa</strong> (<code>WHERE id_pessoa = ...</code>), o que a mantém em cerca de 4 milissegundos.</li>
+</ul>
+<p><strong>Exemplo:</strong> Helder Barbalho, seis eleições entre 2002 e 2022, cinco vitórias, duas reeleições (prefeito em 2008 e governador em 2022), e a troca de PMDB para MDB.</p>
+<p><strong>Limitações:</strong> presidente não aparece. Vice-prefeito e vice-governador dos anos antigos vêm sem resultado no TSE. Siglas que só mudaram de nome contam como
+troca de partido (no exemplo acima, a &quot;troca&quot; de PMDB para MDB é só a mudança de nome do mesmo partido). Candidatos sem título de eleitor na origem (467) não
+são ligados a outras eleições; só 14 dariam para ligar por CPF ou nome, então o ganho não justificava uma regra a mais.</p>
+<hr>
+<h2>10. Resumo das limitações</h2>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Limitação</th>
+<th>Onde afeta</th>
+<th>Tamanho</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Despesas contratadas, não necessariamente pagas</td>
+<td>Q1, Q9</td>
+<td>escolha declarada</td>
+</tr>
+<tr>
+<td>Linhas de despesa totalmente idênticas</td>
+<td>Q1, Q9</td>
+<td>0,8% do valor em 2022</td>
+</tr>
+<tr>
+<td>Patrimônio autodeclarado, com valores absurdos na origem</td>
+<td>Q2</td>
+<td>tratado com mediana e faixas</td>
+</tr>
+<tr>
+<td>Situação da candidatura (indeferido) não publicada em 2024</td>
+<td>Q2, Q8</td>
+<td>0,3 a 0,5 ponto percentual na Q2; na Q8 não foi medido</td>
+</tr>
+<tr>
+<td>Associação entre fonte de dinheiro e vitória não prova causa</td>
+<td>Q8</td>
+<td>explicado na tela</td>
+</tr>
+<tr>
+<td><code>SQ_RECEITA</code> repetido</td>
+<td>Q8</td>
+<td>0,5% do valor, linhas mantidas</td>
+</tr>
+<tr>
+<td>Texto livre das descrições</td>
+<td>Q9</td>
+<td>cosmético</td>
+</tr>
+<tr>
+<td>Presidente fora; vices antigos sem resultado; siglas renomeadas</td>
+<td>Q10</td>
+<td>declarado</td>
+</tr>
+<tr>
+<td>Idade mediana do município só de 2022, aplicada a pleitos de 2004 a 2024</td>
+<td>Q6</td>
+<td>declarado na tela</td>
+</tr>
+<tr>
+<td>Lista de linhagens partidárias é uma decisão nossa</td>
+<td>Q6</td>
+<td>pode subestimar a alternância um pouco</td>
+</tr>
+<tr>
+<td>Escolaridade do candidato autodeclarada; escala de anos de estudo é convenção nossa</td>
+<td>Q4</td>
+<td>declarado na tela</td>
+</tr>
+<tr>
+<td>Parte 2 da Q4 não feita por município em 2022</td>
+<td>Q4</td>
+<td>exigiria votos por município (4 GB)</td>
+</tr>
+<tr>
+<td>Índices (IDHM, PIB, população) de 2010 aplicados às eleições de 2008 e 2012</td>
+<td>Q3</td>
+<td>declarado na tela</td>
+</tr>
+<tr>
+<td>Votação anulada identificada por regra estatística (cerca de Tukey), não por lista oficial</td>
+<td>Q3</td>
+<td>84 municípios em 2008, 67 em 2012</td>
+</tr>
+<tr>
+<td>Soma aptos = comparecimento + abstenções difere em até 2 eleitores em linhas do TSE</td>
+<td>Q3</td>
+<td>restrição relaxada para 10, números mantidos</td>
+</tr>
+<tr>
+<td>Três municípios sem IDHM/PIB de 2010</td>
+<td>Q3</td>
+<td>3 de 1.238</td>
+</tr>
+<tr>
+<td>Seis estados</td>
+<td>todas</td>
+<td>recorte do projeto</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>11. Onde está cada coisa</h2>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Arquivo (em <code>dados/questoes/carga_v2/</code>)</th>
+<th>O quê</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>carga_v2.py</code>, <code>importar_v2.py</code></td>
+<td>candidaturas, pessoas, vagas e despesas</td>
+</tr>
+<tr>
+<td><code>carga_bens.py</code>, <code>importar_bens.py</code></td>
+<td>bens (Q2)</td>
+</tr>
+<tr>
+<td><code>carga_receitas.py</code>, <code>importar_receitas.py</code></td>
+<td>receitas (Q8)</td>
+</tr>
+<tr>
+<td><code>der_eleicoes_v2.sql</code></td>
+<td>modelo com chaves, restrições e índices</td>
+</tr>
+<tr>
+<td><code>views_v2.sql</code></td>
+<td>views da Q1, da Q10 e da qualidade dos dados</td>
+</tr>
+<tr>
+<td><code>carga_eleitorado.py</code>, <code>importar_eleitorado.py</code></td>
+<td>perfil do eleitorado por escolaridade e idade (Q4; serve a Q3 e Q6)</td>
+</tr>
+<tr>
+<td><code>carga_idade_municipio.py</code>, <code>importar_idade.py</code></td>
+<td>idade mediana do IBGE (Q6)</td>
+</tr>
+<tr>
+<td><code>baixa_ibge_2010.py</code>, <code>carga_q3.py</code>, <code>importar_q3.py</code></td>
+<td>PIB e população de 2010 (SIDRA) e totalização por município 2008/2012 (Q3)</td>
+</tr>
+<tr>
+<td><code>views_q2.sql</code>, <code>views_q3.sql</code>, <code>views_q4.sql</code>, <code>views_q6.sql</code>, <code>views_q8.sql</code>, <code>views_q9.sql</code></td>
+<td>views das perguntas 2, 3, 4, 6, 8 e 9</td>
+</tr>
+<tr>
+<td><code>conferir_identidade.py</code></td>
+<td>gera as listas de revisão da resolução de identidade</td>
+</tr>
+<tr>
+<td><code>site_eleicoes/</code></td>
+<td>o site de apresentação</td>
+</tr>
+</tbody></table></div>
+
+</main>
+</body>
+</html>

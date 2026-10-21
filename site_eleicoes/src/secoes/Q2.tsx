@@ -195,7 +195,7 @@ export function Q2() {
   );
 }
 
-function Colunas(p: { linhas: { rotulo: string; taxa: number; detalhe: { rotulo: string; valor: string }[] }[]; geral: number }) {
+export function Colunas(p: { linhas: { rotulo: string; taxa: number; detalhe: { rotulo: string; valor: string }[] }[]; geral: number }) {
   const t: Tokens = useTokens();
   return (
     <div style={{ height: 320 }}>

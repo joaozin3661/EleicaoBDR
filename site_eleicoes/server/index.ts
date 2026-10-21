@@ -188,6 +188,169 @@ ORDER BY quintil`,
   }),
 );
 
+// ---------------------------------------------------------------- Q3
+app.get(
+  "/api/q3",
+  rota(async (req) => {
+    const a = ano(req.query.ano);
+    const dim = texto(req.query.dim) === "PIB" ? "PIB" : "IDHM";
+    const cargo = texto(req.query.cargo) === "VEREADOR" ? "VEREADOR" : "PREFEITO";
+    const uf = texto(req.query.uf) || "TODAS";
+    const g = await consulta(
+      `SELECT dimensao, grupo_ordem, municipios, municipios_anulados, aptos, pct_isentos, pct_abstencao, pct_brancos, pct_nulos,
+       pct_eleitores_pop, idhm_medio, pib_per_capita_mediano, idhm_min, idhm_max, pib_min, pib_max
+FROM mv_q3_grupos
+WHERE ano = $1 AND uf = $2 AND dimensao IN ($3, 'TODOS')
+ORDER BY dimensao, grupo_ordem`,
+      [a, uf, dim],
+    );
+    const p = await consulta(
+      `SELECT dimensao, grupo_ordem, partido, eleitos, pct_do_grupo, posicao
+FROM mv_q3_partidos
+WHERE ano = $1 AND cargo = $2 AND uf = $3 AND dimensao IN ($4, 'TODOS')
+ORDER BY dimensao, grupo_ordem, posicao, partido`,
+      [a, cargo, uf, dim],
+    );
+    const c = await consulta(
+      `SELECT medida, municipios, correlacao
+FROM mv_q3_correlacao
+WHERE ano = $1 AND uf = $2 AND indice = $3
+ORDER BY medida`,
+      [a, uf, dim],
+    );
+    return { sql: `${g.sql};\n\n${p.sql};\n\n${c.sql};`, dados: { grupos: g.linhas, partidos: p.linhas, correlacao: c.linhas } };
+  }),
+);
+
+// ---------------------------------------------------------------- Q4
+app.get(
+  "/api/q4/opcoes",
+  rota(async () => {
+    const q = await consulta("SELECT DISTINCT ano, cargo FROM mv_q4_sucesso WHERE uf = 'TODAS' ORDER BY ano, cargo");
+    return { sql: q.sql, dados: q.linhas };
+  }),
+);
+
+app.get(
+  "/api/q4",
+  rota(async (req) => {
+    const a = ano(req.query.ano);
+    const cargo = texto(req.query.cargo);
+    const uf = texto(req.query.uf) || "TODAS";
+    const s = await consulta(
+      `SELECT ordem, grau, candidatos, eleitos, taxa_sucesso
+FROM mv_q4_sucesso
+WHERE ano = $1 AND cargo = $2 AND uf = $3
+ORDER BY ordem`,
+      [a, cargo, uf],
+    );
+    const r = await consulta(
+      `SELECT ordem, grau, candidatos, eleitos, eleitores, pct_candidatos, pct_eleitos, pct_eleitorado
+FROM mv_q4_representacao
+WHERE ano = $1 AND cargo = $2 AND uf = $3
+ORDER BY ordem`,
+      [a, cargo, uf],
+    );
+    // a parte 2 (município a município) só existe para as eleições municipais de 2024
+    const municipal = a === 2024 && (cargo === "PREFEITO" || cargo === "VEREADOR");
+    const g = municipal
+      ? await consulta(
+          `SELECT grupo_ordem, municipios, eleitos, anos_eleitorado_min, anos_eleitorado_max, anos_eleitorado_medio,
+       anos_eleitos_medio, pct_superior_eleitorado, pct_superior_eleitos
+FROM mv_q4_grupos
+WHERE cargo = $1 AND uf = $2
+ORDER BY grupo_ordem`,
+          [cargo, uf],
+        )
+      : { sql: "", linhas: [] };
+    const c = municipal
+      ? await consulta("SELECT municipios, correlacao, inclinacao FROM mv_q4_correlacao WHERE cargo = $1 AND uf = $2", [cargo, uf])
+      : { sql: "", linhas: [] };
+    return {
+      sql: [s.sql, r.sql, g.sql, c.sql].filter(Boolean).join(";\n\n") + ";",
+      dados: { sucesso: s.linhas, representacao: r.linhas, grupos: g.linhas, correlacao: c.linhas[0] ?? null, municipal },
+    };
+  }),
+);
+
+// ---------------------------------------------------------------- Q6
+app.get(
+  "/api/q6",
+  rota(async (req) => {
+    const cargo = texto(req.query.cargo) === "VEREADOR" ? "VEREADOR" : "PREFEITO";
+    const uf = texto(req.query.uf) || "TODAS";
+    const g = await consulta("SELECT grupo_ordem, grupo FROM vw_q6_grupo ORDER BY grupo_ordem");
+    const i = await consulta(
+      `SELECT ano, grupo_ordem, municipios, eleitos, idade_media, idade_mediana_eleitos, pct_ate_34, pct_60_mais
+FROM mv_q6_idade
+WHERE cargo = $1 AND uf = $2
+ORDER BY ano, grupo_ordem`,
+      [cargo, uf],
+    );
+    const c = await consulta(
+      `SELECT ano, municipios, correlacao, inclinacao
+FROM mv_q6_correlacao
+WHERE cargo = $1 AND uf = $2
+ORDER BY ano`,
+      [cargo, uf],
+    );
+    const a = await consulta(
+      `SELECT ano, grupo_ordem, transicoes, pct_partido_mudou, pct_prefeito_mudou,
+       incumbentes_concorreram, incumbentes_reeleitos, pct_reeleicao, pct_tentou_reeleicao
+FROM mv_q6_alternancia
+WHERE uf = $1
+ORDER BY ano, grupo_ordem`,
+      [uf],
+    );
+    return {
+      sql: `${i.sql};\n\n${c.sql};\n\n${a.sql};`,
+      dados: { grupos: g.linhas, idade: i.linhas, correlacao: c.linhas, alternancia: a.linhas },
+    };
+  }),
+);
+
+// ---------------------------------------------------------------- Q8
+app.get(
+  "/api/q8/opcoes",
+  rota(async () => {
+    const q = await consulta("SELECT ano, cargo FROM mv_q8_resumo WHERE uf = 'TODAS' ORDER BY cargo, ano");
+    return { sql: q.sql, dados: q.linhas };
+  }),
+);
+
+app.get(
+  "/api/q8",
+  rota(async (req) => {
+    const p = [ano(req.query.ano), texto(req.query.cargo), texto(req.query.uf) || "TODAS"];
+    const r = await consulta(
+      `SELECT candidatos, eleitos, sem_receita, receita_total, pct_publico_do_dinheiro,
+       maioria_publica, maioria_publica_eleitos, maioria_privada, maioria_privada_eleitos,
+       mediana_receita_eleitos, mediana_receita_nao_eleitos
+FROM mv_q8_resumo
+WHERE ano = $1 AND cargo = $2 AND uf = $3`,
+      p,
+    );
+    const f = await consulta(
+      `SELECT ordem, faixa, candidatos, eleitos, taxa_sucesso, receita_mediana
+FROM mv_q8_faixas
+WHERE ano = $1 AND cargo = $2 AND uf = $3
+ORDER BY ordem`,
+      p,
+    );
+    const o = await consulta(
+      `SELECT grupo, categoria, publico, valor, candidatos
+FROM mv_q8_origem
+WHERE ano = $1 AND cargo = $2 AND uf = $3
+ORDER BY grupo, valor DESC`,
+      p,
+    );
+    return {
+      sql: `${r.sql};\n\n${f.sql};\n\n${o.sql};`,
+      dados: { resumo: r.linhas[0] ?? null, faixas: f.linhas, origem: o.linhas },
+    };
+  }),
+);
+
 // ---------------------------------------------------------------- Q9
 app.get(
   "/api/q9/opcoes",
