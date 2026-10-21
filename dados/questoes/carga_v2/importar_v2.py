@@ -41,7 +41,7 @@ def senha_do_banco():
 CONEXAO = dict(host="localhost", port=5432, dbname="eleicoes_v2", user="postgres", password=senha_do_banco())
 RECRIAR = False
 SAIDA = os.path.join(PASTA, "saida")
-ORDEM = ["municipio", "eleicao", "partido", "pessoa", "candidatura", "vaga", "despesa", "bem_declarado"]
+ORDEM = ["municipio", "eleicao", "partido", "pessoa", "candidatura", "vaga", "despesa", "bem_declarado", "receita"]
 TABELAS = ["indicador_municipal", "vaga", "totalizacao_municipio", "eleitorado", "votacao_legenda", "votacao",
            "despesa", "receita", "bem_declarado", "candidatura", "municipio", "partido", "eleicao", "pessoa"]
 

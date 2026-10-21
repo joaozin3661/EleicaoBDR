@@ -78,9 +78,11 @@ CREATE TABLE bem_declarado (
 
 CREATE TABLE receita (
     id_receita     BIGINT        PRIMARY KEY,
+    sq_receita     BIGINT,                      /* SQ_RECEITA do TSE: varias linhas dividem o mesmo codigo */
     id_candidatura BIGINT        NOT NULL,
-    origem_recurso VARCHAR(100),
-    tipo_doador    VARCHAR(100),
+    origem_recurso VARCHAR(100),                /* DS_FONTE_RECEITA: FUNDO ESPECIAL, FUNDO PARTIDARIO ou OUTROS RECURSOS */
+    tipo_doador    VARCHAR(100),                /* DS_ORIGEM_RECEITA: pessoa fisica, partido, proprios, financiamento coletivo... */
+    natureza       VARCHAR(20),                 /* FINANCEIRO ou ESTIMAVEL (doacao em bens ou servicos) */
     nome_doador    VARCHAR(250),
     valor          DECIMAL(15,2),
     data_receita   DATE,
@@ -153,7 +155,7 @@ CREATE TABLE totalizacao_municipio (
     PRIMARY KEY (cod_ibge, id_eleicao, turno, cargo),
     CONSTRAINT fk_totalizacao_municipio FOREIGN KEY (cod_ibge)   REFERENCES municipio(cod_ibge),
     CONSTRAINT fk_totalizacao_eleicao   FOREIGN KEY (id_eleicao) REFERENCES eleicao(id_eleicao),
-    CONSTRAINT ck_totalizacao_soma CHECK (eleitores_aptos = comparecimento + abstencoes),
+    CONSTRAINT ck_totalizacao_soma CHECK (ABS(eleitores_aptos - comparecimento - abstencoes) <= 10)  /* tolera 10 eleitores: o TSE publica 4 linhas de 2012, ex. Aracaju, com diferenca de 1 ou 2 */,
     CONSTRAINT ck_totalizacao_valores CHECK (comparecimento >= 0 AND abstencoes >= 0
                                              AND votos_brancos >= 0 AND votos_nulos >= 0)
 );
