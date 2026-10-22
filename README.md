@@ -25,6 +25,11 @@ não no front. Mudou um critério? Mude a view.
 
 ## Para começar (quem recebeu o projeto)
 
+**Caminho recomendado: usar a cópia do banco (dump).** Com ela você não precisa baixar os dados brutos nem rodar o
+crawler ou a carga: o dump já é o banco pronto, com as tabelas, as views e as views materializadas. Siga os passos
+1 a 4 abaixo e **pule a seção "Montar tudo do zero"**, que só serve para reconstruir o banco a partir dos arquivos do
+TSE e do IBGE.
+
 ### 1. Pegar o código novo
 
 O código atual está na branch `main`. Se você já tinha clonado o repositório antes, a sua cópia está **antiga**:
@@ -46,10 +51,11 @@ Para conferir que pegou a versão nova: a pasta `site_novo/` tem que existir, e 
 os commits mais recentes (o do site novo é "Site de apresentação (site_novo) ..."). Se o `git pull` reclamar de
 alterações locais, guarde as suas antes com `git stash` e rode o `git pull` de novo.
 
-### 2. Ter o banco
+### 2. Ter o banco (pelo dump)
 
-O banco não fica no git. A cópia está anexada a uma release do GitHub: veja
-[docs/COMO_RESTAURAR_O_BANCO.md](docs/COMO_RESTAURAR_O_BANCO.md) (baixar, restaurar e conferir, uns 10 minutos).
+O banco não fica no git. A cópia (`eleicoes_v2.dump`, 135 MB) está anexada à release `banco-2026-10-22` do GitHub.
+O passo a passo está em [docs/COMO_RESTAURAR_O_BANCO.md](docs/COMO_RESTAURAR_O_BANCO.md): instalar o PostgreSQL 18,
+baixar o arquivo, restaurar com `pg_restore` e conferir as contagens (uns 10 minutos).
 
 ### 3. Abrir o site de apresentação (`site_novo`)
 
@@ -66,6 +72,30 @@ Abra http://localhost:8000. A página de consultas, com o SQL de cada pergunta, 
 
 Para regerar os dados do `site_novo` a partir do **seu** banco (depois de mudar uma view, por exemplo), veja
 `site_novo/README.md`.
+
+### 4. Rodar o site de consulta (`site_eleicoes`)
+
+Este lê o banco restaurado no passo 2. Precisa do **Node.js 20+**.
+
+```
+cd site_eleicoes
+copy .env.example .env      (no Linux/macOS: cp .env.example .env)
+```
+
+No `.env`, troque `COLOQUE_SUA_SENHA_AQUI` pela senha do `postgres` da **sua** instalação. Depois:
+
+```
+npm install
+npm run dev
+```
+
+Abra http://localhost:5173. O `.env` fica fora do git: cada um usa a própria senha.
+
+### O que fica de fora com o dump
+
+Nada do que está acima precisa dos dados brutos (`dados/tse/`, `dados/ibge/`, `dados/questoes/questao1/` e `questao10/`).
+Eles só fazem falta para mudar a carga (`carga_v2.py`) e recarregar as tabelas do zero, ou para regerar as fotos dos
+candidatos, que já estão no git como miniaturas em `site_novo/fotos/`.
 
 ## Estrutura do repositório
 
@@ -104,6 +134,9 @@ Decisões que valem saber antes de mexer:
 - Os 6 estados e os anos estão definidos dentro dos scripts (não há argumentos de linha de comando).
 
 ## Montar tudo do zero
+
+> **Opcional.** Esta seção é para reconstruir o banco a partir dos arquivos brutos (crawler e carga). Quem restaurou a
+> cópia do banco (dump) pelo [passo 2 de "Para começar"](#2-ter-o-banco-pelo-dump) **não precisa fazer nada daqui**.
 
 Pré-requisitos: **Python 3.10+**, **PostgreSQL 18** (com pgAdmin 4) e **Node.js 20+**.
 
