@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consultas · Eleições 2002–2024</title>
+<meta name="description" content="As nove perguntas do banco de eleições respondidas por views SQL, com filtros, gráficos e a consulta executada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="consultas.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="side" aria-label="Perguntas">
+    <a class="marca" href="index.html"><span class="marca__sinal" aria-hidden="true"></span><span>Eleições 2002–2024</span></a>
+    <p class="escopo">AL, PA, PB, PR, SC e SE</p>
+
+    <nav class="menu" id="menu">
+      <p class="grupo">Dinheiro</p>
+      <a href="#q1" data-q="q1">Quanto custa uma cadeira</a>
+      <a href="#q2" data-q="q2">Patrimônio e sucesso</a>
+      <a href="#q8" data-q="q8">Recursos públicos e privados</a>
+      <a href="#q9" data-q="q9">Onde vai a propaganda</a>
+      <p class="grupo">Voto e território</p>
+      <a href="#q5" data-q="q5">Eleitos pela legenda</a>
+      <a href="#q3" data-q="q3">Índices do município</a>
+      <a href="#q4" data-q="q4">Escolaridade</a>
+      <a href="#q6" data-q="q6">Idade e alternância</a>
+      <a href="#q7" data-q="q7" class="pendente">Viés político <span>em pesquisa</span></a>
+      <p class="grupo">Pessoas</p>
+      <a href="#q10" data-q="q10">Carreira de um político</a>
+    </nav>
+
+    <a class="volta" href="index.html">Voltar ao relatório</a>
+  </aside>
+
+  <header class="topo-fone">
+    <a class="marca" href="index.html"><span class="marca__sinal" aria-hidden="true"></span><span>Eleições</span></a>
+    <label class="sr-only" for="menu-fone">Pergunta</label>
+    <select id="menu-fone"></select>
+  </header>
+
+  <main class="canvas" id="canvas">
+    <div class="titulo">
+      <p class="crumb" id="crumb">Pergunta 1</p>
+      <h1 id="titulo">Quanto custa uma cadeira</h1>
+      <p class="achado" id="achado" aria-live="polite"></p>
+    </div>
+
+    <form class="filtros" id="filtros" aria-label="Filtros"></form>
+
+    <div id="corpo" class="corpo" aria-live="polite"></div>
+
+    <section class="sql" aria-labelledby="sql-t">
+      <div class="sql__topo">
+        <div>
+          <h2 id="sql-t">Consulta executada</h2>
+          <p class="muted">O SQL que rodou nas views do banco eleicoes_v2 para montar esta tela.</p>
+        </div>
+        <button type="button" class="botao-sec" id="copiar">Copiar SQL</button>
+      </div>
+      <pre><code id="sql"></code></pre>
+    </section>
+  </main>
+</div>
+
+<script src="dados.js"></script>
+<script src="hemiciclo.js"></script>
+<script src="consultas.js"></script>
+</body>
+</html>

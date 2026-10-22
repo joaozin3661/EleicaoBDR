@@ -17,16 +17,62 @@ TSE / IBGE / IPEA          Python                      PostgreSQL               
 |---|---|---|
 | Crawler | `crawler/` | Baixa dos sites oficiais só os arquivos necessários (6 GB de download, ~33 GB em disco). [Detalhes](docs/CRAWLER.md) |
 | Carga e banco | `dados/questoes/carga_v2/` | Limpa os dados, resolve a identidade das pessoas, gera um CSV por tabela, importa no PostgreSQL e cria as views |
-| Site | `site_eleicoes/` | Página de apresentação (React + API em Node). [Detalhes](site_eleicoes/README.md) |
+| Site de consulta | `site_eleicoes/` | Os dados das perguntas, com filtros (React + API em Node, lê o banco). [Detalhes](site_eleicoes/README.md) |
+| Site de apresentação | `site_novo/` | O relatório visual: as perguntas como capítulos, o hemiciclo com cada eleito, o mapa por município, as fotos dos candidatos e a página de consultas com o SQL das views. Estático: abre sem banco. [Detalhes](site_novo/README.md) |
 
 **Regra do projeto:** o site e o app só leem **views** do banco (`views_*.sql`). Toda regra de negócio fica nas views,
 não no front. Mudou um critério? Mude a view.
+
+## Para começar (quem recebeu o projeto)
+
+### 1. Pegar o código novo
+
+O código atual está na branch `main`. Se você já tinha clonado o repositório antes, a sua cópia está **antiga**:
+atualize assim, dentro da pasta do projeto:
+
+```
+git switch main
+git pull origin main
+```
+
+Se ainda não tem o projeto:
+
+```
+git clone https://github.com/joaozin3661/EleicaoBDR.git
+cd EleicaoBDR
+```
+
+Para conferir que pegou a versão nova: a pasta `site_novo/` tem que existir, e `git log --oneline -3` mostra
+os commits mais recentes (o do site novo é "Site de apresentação (site_novo) ..."). Se o `git pull` reclamar de
+alterações locais, guarde as suas antes com `git stash` e rode o `git pull` de novo.
+
+### 2. Ter o banco
+
+O banco não fica no git. A cópia está anexada a uma release do GitHub: veja
+[docs/COMO_RESTAURAR_O_BANCO.md](docs/COMO_RESTAURAR_O_BANCO.md) (baixar, restaurar e conferir, uns 10 minutos).
+
+### 3. Abrir o site de apresentação (`site_novo`)
+
+Ele não precisa do banco: as respostas das views já estão gravadas em `site_novo/dados/`. Só precisa de um servidor
+local, porque o navegador não lê os arquivos de dados se você abrir o `index.html` com dois cliques.
+
+```
+cd site_novo
+python -m http.server 8000
+```
+
+(no Windows, se `python` não existir, use `py -m http.server 8000`; com Node instalado, `npx serve -l 8000` também serve).
+Abra http://localhost:8000. A página de consultas, com o SQL de cada pergunta, fica em http://localhost:8000/consultas.html.
+
+Para regerar os dados do `site_novo` a partir do **seu** banco (depois de mudar uma view, por exemplo), veja
+`site_novo/README.md`.
 
 ## Estrutura do repositório
 
 ```
 crawler/                      pacote Python que baixa os dados (python -m crawler)
 docs/CRAWLER.md               documentação completa do crawler e das fontes
+docs/DER_v2.md                diagrama entidade-relacionamento do banco eleicoes_v2 (imagem, fonte e mudanças da v1)
 dados/
 ├── INDICE_PERGUNTAS.md       quais arquivos cada uma das 10 perguntas usa
 ├── LeiaParaEntenderProjeto/  dossiê do projeto (Word/PDF), handoff e SQL das versões antigas
@@ -35,7 +81,9 @@ dados/
 │   ├── questao1/ questao10/  entradas e scripts da v1 (legado; os CSVs não ficam no Git)
 ├── tse/leiames_unificados/   dicionários de dados do TSE (significado de cada coluna)
 └── (tse/, ibge/, ipea_atlas/ ...)  dados brutos: NÃO ficam no Git, o crawler baixa
-site_eleicoes/                site (React + Express + TypeScript)
+site_eleicoes/                site de consulta (React + Express + TypeScript)
+site_novo/                    site de apresentação (HTML, CSS e JS sem build; dados e fotos já gravados)
+docs/COMO_RESTAURAR_O_BANCO.md  como baixar e restaurar a cópia do banco
 ```
 
 ## O banco `eleicoes_v2`
@@ -91,16 +139,32 @@ Os dados brutos **não estão no Git** (dezenas de GB). Há duas origens:
    ```
    python dados/questoes/carga_v2/carga_v2.py
    python dados/questoes/carga_v2/carga_bens.py
+   python dados/questoes/carga_v2/carga_receitas.py
+   python dados/questoes/carga_v2/carga_eleitorado.py
+   python dados/questoes/carga_v2/carga_idade_municipio.py
+   python dados/questoes/carga_v2/baixa_ibge_2010.py
+   python dados/questoes/carga_v2/carga_q3.py
+   python dados/questoes/carga_v2/carga_q5.py
    ```
 3. Importar no banco (o primeiro cria as tabelas com `der_eleicoes_v2.sql`; para recomeçar, mude `RECRIAR = True` dentro do arquivo):
    ```
    python dados/questoes/carga_v2/importar_v2.py
    python dados/questoes/carga_v2/importar_bens.py
+   python dados/questoes/carga_v2/importar_receitas.py
+   python dados/questoes/carga_v2/importar_eleitorado.py
+   python dados/questoes/carga_v2/importar_idade.py
+   python dados/questoes/carga_v2/importar_q3.py
+   python dados/questoes/carga_v2/importar_q5.py
    ```
 4. No pgAdmin (Query Tool no `eleicoes_v2`), rode **nesta ordem**:
    1. `views_v2.sql` (base, Q1, Q10, resumo e qualidade)
    2. `views_q2.sql` (patrimônio x sucesso)
-   3. `views_q9.sql` (categorias de despesa e nuvem de palavras)
+   3. `views_q3.sql` (IDHM e PIB x abstenção, brancos, nulos e partidos, 2008 e 2012)
+   4. `views_q4.sql` (escolaridade)
+   5. `views_q5.sql` (eleitos por votos de legenda; leva cerca de 1 minuto)
+   6. `views_q6.sql` (idade do município e alternância)
+   7. `views_q8.sql` (dinheiro público x privado)
+   8. `views_q9.sql` (categorias de despesa e nuvem de palavras; leva cerca de 6 minutos)
 
    As views materializadas guardam o resultado: depois de recarregar dados, rode os arquivos de novo.
 
@@ -118,6 +182,10 @@ npm start
 
 Abra http://localhost:3001. Para desenvolver com recarga automática, use `npm run dev` (http://localhost:5173).
 
+**Versão estática (para mandar um link, sem banco):** com o `npm start` rodando, execute `npm run grava:estatico` e depois
+`npm run build:estatico`. A pasta `dist-estatico/` pode ser hospedada em qualquer lugar (por exemplo, arrastada em
+https://app.netlify.com/drop). Ela inclui a página de justificativas. Detalhes em `site_eleicoes/README.md`.
+
 Alternativa em Python: `pip install streamlit plotly` e `streamlit run dados/questoes/carga_v2/app_v2.py` (Q1 e Q10).
 
 ## Estado atual
@@ -125,11 +193,17 @@ Alternativa em Python: `pip install streamlit plotly` e `streamlit run dados/que
 | Item | Situação |
 |---|---|
 | Crawler (TSE, IBGE, IPEA, Dataverse) | pronto |
-| Carga v2: pessoa, candidatura, vaga, despesa, bens | pronta |
-| Views: Q1 (custo por cadeira), Q2 (patrimônio), Q9 (categorias e palavras), Q10 (trajetória) | prontas |
-| Site: carga do banco, qualidade dos dados, Q1, Q2, Q9, Q10 (rotas `/api/...`) | pronto |
-| Tabelas `receita`, `votacao`, `votacao_legenda`, `eleitorado`, `totalizacao_municipio`, `indicador_municipal` | criadas, **vazias** (cargas pendentes: Q3 a Q8) |
-| Dossiê Word e DER atualizados para a v2 | pendente |
+| Carga v2: pessoa, candidatura, vaga, despesa, bens, receitas, eleitorado, idade do município, indicadores de 2010, totalização 2008/2012 | pronta |
+| Perguntas respondidas (banco + site): **Q1, Q2, Q3, Q4, Q5, Q6, Q8, Q9, Q10** | prontas, com verificação independente em pandas |
+| Q7 (ideologia dos partidos) | adiada: falta a base de ideologia |
+| Tabelas `votacao` e `votacao_legenda` | carregadas para as eleições proporcionais (2018 a 2024) |
+| Site: carga, tratamento e as 9 perguntas, mais versão estática com página de justificativas | pronto |
+| DER da v2 (`docs/DER_v2.md`, com imagem) | pronto |
+| Site de apresentação (`site_novo`): capítulos das perguntas, hemiciclo, mapa por município, Q3 aprofundada, fotos | pronto (Q10 como capítulo próprio em andamento) |
+| Cópia do banco para colaboradores (release `banco-2026-10-22`) | pronta |
+| Dossiê Word atualizado para a v2 (incluir o DER novo e o texto das mudanças) | pendente |
+
+Os dados usados e as decisões de cada pergunta (o que foi conferido e as limitações) estão em `JUSTIFICATIVA_DADOS.md`.
 
 O documento `dados/LeiaParaEntenderProjeto/LEIA_PRIMEIRO_projeto_eleicoes.md` descreve a **v1** (banco `eleicoes`,
 título de eleitor como chave) e está desatualizado nesses pontos; vale pelo histórico das decisões e dos problemas resolvidos.

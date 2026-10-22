@@ -34,3 +34,16 @@ dados/questoes/**/municipio_tse_ibge/
 *.dta
 *.rds
 *.pkl
+
+# site_novo: dependências e intermediários dos scripts (as miniaturas em site_novo/fotos são geradas por eles)
+site_novo/scripts/miniaturas/node_modules/
+site_novo/scripts/miniaturas/lista.json
+site_novo/scripts/cache_ibge/
+site_novo/.playwright-cli/
+
+# cópia do banco (pg_dump): vai como anexo de uma Release no GitHub, nunca no git
+dados/_dump/
+
+# site_novo: capturas de tela e páginas de teste da inspeção visual (fica só a nota de design)
+site_novo/.taste-skill/*
+!site_novo/.taste-skill/notas.md
