@@ -11,8 +11,9 @@ type Repr = { ordem: number; grau: string; candidatos: number; eleitos: number; 
 type Grupo = {
   grupo_ordem: number; municipios: number; eleitos: number; anos_eleitorado_min: number; anos_eleitorado_max: number;
   anos_eleitorado_medio: number; anos_eleitos_medio: number; pct_superior_eleitorado: number; pct_superior_eleitos: number;
+  anos_votados_medio: number | null; pct_superior_votados: number | null;
 };
-type Dados = { sucesso: Sucesso[]; representacao: Repr[]; grupos: Grupo[]; correlacao: { municipios: number; correlacao: number; inclinacao: number } | null; municipal: boolean };
+type Dados = { sucesso: Sucesso[]; representacao: Repr[]; grupos: Grupo[]; correlacao: { municipios: number; correlacao: number; inclinacao: number; correlacao_votados: number | null } | null; municipal: boolean };
 
 const UFS = ["AL", "PA", "PB", "PR", "SC", "SE"];
 const CURTO = ["Analf.", "Lê/escr.", "Fund. i.", "Fund. c.", "Méd. i.", "Méd. c.", "Sup. i.", "Sup. c."]; // i = incompleto, c = completo
@@ -55,7 +56,8 @@ export function Q4() {
         <>
           Duas perguntas. <span className="destaque">Parte 1:</span> candidatos mais escolarizados se elegem mais? (2022 e 2024.){" "}
           <span className="destaque">Parte 2:</span> municípios cujo eleitorado tem menos escolaridade elegem representantes de menos escolaridade?
-          (só 2024: é a eleição municipal, em que os eleitos pertencem a um município; em 2022 a comparação é feita no estado.) A escolaridade do
+          (Em 2024, prefeito e vereador pertencem ao município. Em 2022, para deputados, mede-se pelos votos: a escolaridade dos eleitos ponderada
+          pelos votos que o município deu a eles. Governador e senador ficam fora.) A escolaridade do
           candidato é a declarada ao TSE; a do eleitorado vem do perfil dos eleitores aptos do 1º turno. Para tirar médias, cada grau vale uma
           quantidade de anos de estudo equivalentes (fundamental incompleto 5, completo 9, médio completo 12, superior completo 16).
           Vices e suplentes de senador ficam de fora.
@@ -131,13 +133,13 @@ export function Q4() {
             </div>
           </div>
 
-          {d.municipal ? <Parte2 d={d} t={t} cargo={cargo} grupoOk={grupoOk} /> : (
+          {d.municipal ? <Parte2 d={d} t={t} ano={ano} cargo={cargo} grupoOk={grupoOk} /> : (
             <div className="card">
               <h3>Parte 2 · Município a município</h3>
               <p className="aviso" style={{ marginTop: 8 }}>
-                Em {ano} os eleitos são deputados, governador e senador, que representam o estado e não um município; por isso a comparação
-                município a município só é feita para prefeito e vereador de 2024. Aqui a comparação é entre o eleitorado e os eleitos do
-                estado, no gráfico acima.
+                Para {cargo.toLowerCase()} de {ano} a comparação município a município não é feita: governador e senador representam o estado e
+                os votos por município deles não foram carregados. A parte 2 cobre prefeito e vereador de 2024 e deputado federal e estadual de 2022.
+                Aqui a comparação é entre o eleitorado e os eleitos do estado, no gráfico acima.
               </p>
             </div>
           )}
@@ -200,7 +202,7 @@ function Representacao({ linhas, t }: { linhas: Repr[]; t: Tokens }) {
   );
 }
 
-function Parte2({ d, t, cargo, grupoOk }: { d: Dados; t: Tokens; cargo: string; grupoOk: (g: Grupo) => boolean }) {
+function Parte2({ d, t, ano, cargo, grupoOk }: { d: Dados; t: Tokens; ano: number; cargo: string; grupoOk: (g: Grupo) => boolean }) {
   const quartos = d.grupos.filter(grupoOk);
   const todos = d.grupos.find((g) => g.grupo_ordem === 0);
   const g1 = quartos.find((g) => g.grupo_ordem === 1);
@@ -208,18 +210,21 @@ function Parte2({ d, t, cargo, grupoOk }: { d: Dados; t: Tokens; cargo: string; 
   const dados = quartos.map((g) => ({ rotulo: `${g.grupo_ordem}º quarto`, Eleitorado: g.anos_eleitorado_medio, Eleitos: g.anos_eleitos_medio, g }));
   const cor = { Eleitorado: t.neutral, Eleitos: t["series-2"] };
   const c = d.correlacao;
+  const deputado = cargo.startsWith("DEPUTADO");
+  const eleitosNome = cargo === "PREFEITO" ? "prefeitos" : cargo === "VEREADOR" ? "vereadores" : cargo === "DEPUTADO FEDERAL" ? "deputados federais" : "deputados estaduais";
   return (
     <div className="card">
-      <h3>Parte 2 · Eleitorado e eleitos, município a município (2024)</h3>
+      <h3>Parte 2 · Eleitorado e eleitos, município a município ({ano})</h3>
       <p className="sub">
         Os municípios foram divididos em quatro grupos pela escolaridade média do eleitorado (anos de estudo equivalentes). Para cada grupo: a escolaridade
-        média do eleitorado e a dos {cargo === "PREFEITO" ? "prefeitos" : "vereadores"} eleitos.
+        média do eleitorado e a dos {eleitosNome} eleitos
+        {deputado ? ", ponderada pelos votos que os municípios do grupo deram a eles (o deputado representa o estado, não o município)" : ""}.
       </p>
       <div className="grade g3" style={{ marginTop: 12 }}>
         <Stat
           rotulo="Correlação município a município"
           valor={c ? virgula(c.correlacao, 2) : "—"}
-          detalhe={c ? `${forca(c.correlacao)}: cada ano de estudo a mais no eleitorado vai com ${virgula(c.inclinacao, 2)} ano a mais nos eleitos (${num(c.municipios)} municípios)` : undefined}
+          detalhe={c ? `${forca(c.correlacao)}: cada ano de estudo a mais no eleitorado vai com ${virgula(c.inclinacao, 2)} ano a mais nos eleitos (${num(c.municipios)} municípios)${c.correlacao_votados != null ? `. Considerando todos os candidatos votados, não só os eleitos: ${virgula(c.correlacao_votados, 2)}` : ""}` : undefined}
           hero
         />
         <Stat
@@ -272,11 +277,15 @@ function Parte2({ d, t, cargo, grupoOk }: { d: Dados; t: Tokens; cargo: string; 
           { titulo: "Eleitorado com superior", valor: (g) => pct(g.pct_superior_eleitorado), numero: true },
           { titulo: "Eleitos (anos de estudo)", valor: (g) => virgula(g.anos_eleitos_medio, 2), numero: true },
           { titulo: "Eleitos com superior", valor: (g) => pct(g.pct_superior_eleitos), numero: true },
+          ...(deputado
+            ? [{ titulo: "Todos os votados (anos de estudo)", valor: (g: Grupo) => (g.anos_votados_medio == null ? "—" : virgula(g.anos_votados_medio, 2)), numero: true }]
+            : []),
         ]}
         linhas={[...d.grupos].sort((a, b) => (a.grupo_ordem || 9) - (b.grupo_ordem || 9))}
       />
       <p className="nota">
         O grupo é definido pelos 1.238 municípios dos 6 estados; ao escolher um estado, só mudam os municípios mostrados, não os cortes.
+        {deputado && " Em 2022, a escolaridade dos eleitos de um município é a média da escolaridade dos deputados eleitos, ponderada pelos votos que o município deu a eles; os votos de candidatos sem escolaridade divulgada ficam de fora."}
       </p>
     </div>
   );

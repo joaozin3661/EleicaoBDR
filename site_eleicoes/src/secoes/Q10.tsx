@@ -39,7 +39,7 @@ export function Q10() {
   return (
     <Secao
       id="q10"
-      num="10 · Pergunta 10"
+      num="11 · Pergunta 10"
       titulo="Sobrevivência da carreira de um político"
       descricao="Dado um político, todas as eleições que disputou de 2002 a 2024: cargo, partido da época, vitórias, derrotas e reeleições. Busque por qualquer parte do nome, com ou sem acento — quem mudou de nome é achado também pelo antigo."
     >

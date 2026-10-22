@@ -107,6 +107,10 @@ async function main() {
     for (const dim of ["IDHM", "PIB"])
       for (const cargo of ["PREFEITO", "VEREADOR"]) for (const uf of UFS) urls.push(`/api/q3?${qs({ ano, dim, cargo, uf })}`);
 
+  // ---- Q5: eleição x cargo x uf
+  for (const [ano, cargos] of [[2018, ["DEPUTADO FEDERAL", "DEPUTADO ESTADUAL"]], [2020, ["VEREADOR"]], [2022, ["DEPUTADO FEDERAL", "DEPUTADO ESTADUAL"]], [2024, ["VEREADOR"]]] as const)
+    for (const cargo of cargos) for (const uf of UFS) urls.push(`/api/q5?${qs({ ano, cargo, uf })}`);
+
   // ---- Q6: cargo x uf
   for (const cargo of ["PREFEITO", "VEREADOR"]) for (const uf of UFS) urls.push(`/api/q6?${qs({ cargo, uf })}`);
 

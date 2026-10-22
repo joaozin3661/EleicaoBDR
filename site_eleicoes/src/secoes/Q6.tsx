@@ -64,7 +64,7 @@ export function Q6() {
   return (
     <Secao
       id="q6"
-      num="07 · Pergunta 6"
+      num="08 · Pergunta 6"
       titulo="A idade do município se reflete em quem ele elege?"
       descricao={
         <>

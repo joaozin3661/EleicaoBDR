@@ -1,0 +1,17 @@
+=== carga_receitas | anos: [2018, 2020, 2022, 2024] ===
+  2018: 48,791 linhas nas 6 UFs | sem receita (-1): 377 | fora do modelo (suplementares): 0 | gravadas: 48,414
+       R$ por fonte (mi): {'FUNDO ESPECIAL': 302.6, 'FUNDO PARTIDARIO': 68.3, 'OUTROS RECURSOS': 162.0}
+  2020: 468,060 linhas nas 6 UFs | sem receita (-1): 16,139 | fora do modelo (suplementares): 968 | gravadas: 450,953
+       R$ por fonte (mi): {'FUNDO ESPECIAL': 349.9, 'FUNDO PARTIDARIO': 17.7, 'OUTROS RECURSOS': 349.6}
+  2022: 56,021 linhas nas 6 UFs | sem receita (-1): 517 | fora do modelo (suplementares): 0 | gravadas: 55,504
+       R$ por fonte (mi): {'FUNDO ESPECIAL': 763.1, 'FUNDO PARTIDARIO': 81.8, 'OUTROS RECURSOS': 208.1}
+  2024: 424,209 linhas nas 6 UFs | sem receita (-1): 8,991 | fora do modelo (suplementares): 188 | gravadas: 415,030
+       R$ por fonte (mi): {'FUNDO ESPECIAL': 925.1, 'FUNDO PARTIDARIO': 39.3, 'OUTROS RECURSOS': 354.9}
+
+  -> receita.csv: 969,901 linhas | R$ 3.62 bi
+  tipo_doador (R$ mi): {'Recursos de partido político': 2505.5, 'Recursos de pessoas físicas': 656.2, 'Recursos próprios': 286.2, 'Recursos de outros candidatos': 166.7, 'Recursos de Financiamento Coletivo': 6.8, 'Doações pela Internet': 0.6, 'Recursos de origens não identificadas': 0.3, 'Rendimentos de aplicações financeiras': 0.1, 'Comercialização de bens ou realização de eventos': 0.0, 'Comercialização de Bens com FEFC': 0.0, 'Comercialização de Bens com OR': 0.0}
+  natureza (R$ mi): {'ESTIMÁVEL': 388.3, 'FINANCEIRO': 3234.2}
+  maiores campos: origem 16 | tipo 48 | doador 114
+  candidaturas com alguma receita: 177086 | linhas sem fonte: 0
+
+PRONTO. Agora rode importar_receitas.py

@@ -65,7 +65,7 @@ export function Q8() {
   return (
     <Secao
       id="q8"
-      num="08 · Pergunta 8"
+      num="09 · Pergunta 8"
       titulo="Dinheiro público ou privado: quem se elege?"
       descricao={
         <>

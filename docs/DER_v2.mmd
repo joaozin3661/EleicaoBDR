@@ -1,0 +1,151 @@
+erDiagram
+    PESSOA ||--o{ CANDIDATURA : "concorre em"
+    ELEICAO ||--o{ CANDIDATURA : "abriga"
+    PARTIDO ||--o{ CANDIDATURA : "lança"
+    MUNICIPIO |o--o{ CANDIDATURA : "sedia"
+    CANDIDATURA ||--o{ BEM_DECLARADO : "declara"
+    CANDIDATURA ||--o{ RECEITA : "arrecada"
+    CANDIDATURA ||--o{ DESPESA : "gasta"
+    CANDIDATURA ||--o{ VOTACAO : "obtém"
+    MUNICIPIO ||--o{ VOTACAO : "apura"
+    PARTIDO ||--o{ VOTACAO_LEGENDA : "recebe"
+    ELEICAO ||--o{ VOTACAO_LEGENDA : "contabiliza"
+    MUNICIPIO ||--o{ VOTACAO_LEGENDA : "apura legenda"
+    MUNICIPIO ||--o{ ELEITORADO : "possui"
+    ELEICAO ||--o{ ELEITORADO : "registra"
+    MUNICIPIO ||--o{ TOTALIZACAO_MUNICIPIO : "totaliza"
+    ELEICAO ||--o{ TOTALIZACAO_MUNICIPIO : "apura totais"
+    MUNICIPIO ||--o{ INDICADOR_MUNICIPAL : "tem"
+    ELEICAO ||--o{ VAGA : "oferece"
+    MUNICIPIO |o--o{ VAGA : "sedia vagas"
+
+    PESSOA {
+        int id_pessoa PK
+        string titulo_eleitor
+        string cpf
+        string nome
+        date data_nascimento
+        string sexo
+        string raca_cor
+        string uf_nascimento
+    }
+    ELEICAO {
+        int id_eleicao PK
+        int ano
+        string tipo_eleicao
+    }
+    PARTIDO {
+        int numero_partido PK
+        string sigla
+        string nome
+        string espectro_politico
+    }
+    MUNICIPIO {
+        int cod_ibge PK
+        string cod_tse
+        string nome
+        string uf
+        string regiao
+    }
+    CANDIDATURA {
+        bigint id_candidatura PK
+        int id_pessoa FK
+        int id_eleicao FK
+        int numero_partido FK
+        int cod_ibge FK
+        string sg_uf
+        string cargo
+        string abrangencia
+        int numero_candidato
+        string nome_urna
+        string nome_declarado
+        string titulo_declarado
+        string cpf_declarado
+        string sigla_partido
+        string grau_instrucao
+        string ocupacao
+        string situacao_candidatura
+        string detalhe_situacao
+        string situacao_resultado
+        int total_votos
+    }
+    BEM_DECLARADO {
+        bigint id_bem PK
+        bigint id_candidatura FK
+        string tipo_bem
+        string descricao
+        decimal valor
+    }
+    RECEITA {
+        bigint id_receita PK
+        bigint sq_receita
+        bigint id_candidatura FK
+        string origem_recurso
+        string tipo_doador
+        string natureza
+        string nome_doador
+        decimal valor
+        date data_receita
+    }
+    DESPESA {
+        bigint id_despesa PK
+        bigint sq_despesa
+        bigint id_candidatura FK
+        string tipo_despesa
+        string descricao
+        string nome_fornecedor
+        decimal valor
+        date data_despesa
+    }
+    VOTACAO {
+        bigint id_candidatura PK,FK
+        int cod_ibge PK,FK
+        int turno PK
+        int votos_nominais
+    }
+    VOTACAO_LEGENDA {
+        int numero_partido PK,FK
+        int id_eleicao PK,FK
+        int cod_ibge PK,FK
+        int turno PK
+        string cargo PK
+        int votos_legenda
+    }
+    ELEITORADO {
+        int cod_ibge PK,FK
+        int id_eleicao PK,FK
+        int turno PK
+        string faixa_etaria PK
+        string grau_instrucao PK
+        int qtd_eleitores
+    }
+    TOTALIZACAO_MUNICIPIO {
+        int cod_ibge PK,FK
+        int id_eleicao PK,FK
+        int turno PK
+        string cargo PK
+        int eleitores_aptos
+        int comparecimento
+        int abstencoes
+        int votos_brancos
+        int votos_nulos
+    }
+    VAGA {
+        int id_vaga PK
+        int id_eleicao FK
+        int cod_ibge FK
+        string sg_uf
+        string cargo
+        int qt_vaga
+        date dt_posse
+    }
+    INDICADOR_MUNICIPAL {
+        int cod_ibge PK,FK
+        int ano PK
+        decimal pib
+        int populacao
+        decimal pib_per_capita
+        decimal idade_mediana
+        decimal indice_envelhecimento
+        decimal idhm
+    }

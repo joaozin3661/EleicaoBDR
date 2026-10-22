@@ -6,6 +6,7 @@ import { Q1 } from "./secoes/Q1";
 import { Q2 } from "./secoes/Q2";
 import { Q3 } from "./secoes/Q3";
 import { Q4 } from "./secoes/Q4";
+import { Q5 } from "./secoes/Q5";
 import { Q6 } from "./secoes/Q6";
 import { Q8 } from "./secoes/Q8";
 import { Q9 } from "./secoes/Q9";
@@ -22,6 +23,7 @@ const SECOES = [
   { id: "q2", rotulo: "Q2 · Patrimônio", Componente: Q2 },
   { id: "q3", rotulo: "Q3 · Índices do município", Componente: Q3 },
   { id: "q4", rotulo: "Q4 · Escolaridade", Componente: Q4 },
+  { id: "q5", rotulo: "Q5 · Legenda", Componente: Q5 },
   { id: "q6", rotulo: "Q6 · Idade", Componente: Q6 },
   { id: "q8", rotulo: "Q8 · Financiamento", Componente: Q8 },
   { id: "q9", rotulo: "Q9 · Propaganda", Componente: Q9 },

@@ -1,0 +1,7 @@
+=== carga_eleitorado | anos: [2018, 2020, 2022, 2024] ===
+  2018: 8,377,682 linhas lidas -> 167,948 agregadas | 1,238 municípios | 25,173,256 aptos | superior completo 10.1% | não informado 0.02%
+  2020: 4,644,923 linhas lidas -> 168,799 agregadas | 1,238 municípios | 25,913,244 aptos | superior completo 10.9% | não informado 0.00%
+  2022: 8,785,738 linhas lidas -> 172,107 agregadas | 1,238 municípios | 27,136,743 aptos | superior completo 10.8% | não informado 0.00%
+  2024: 9,825,477 linhas lidas -> 171,665 agregadas | 1,238 municípios | 27,914,914 aptos | superior completo 10.8% | não informado 0.00%
+
+PRONTO. Agora rode importar_eleitorado.py

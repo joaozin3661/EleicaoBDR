@@ -251,24 +251,75 @@ WHERE ano = $1 AND cargo = $2 AND uf = $3
 ORDER BY ordem`,
       [a, cargo, uf],
     );
-    // a parte 2 (município a município) só existe para as eleições municipais de 2024
-    const municipal = a === 2024 && (cargo === "PREFEITO" || cargo === "VEREADOR");
+    // a parte 2 (município a município): prefeito e vereador de 2024 e deputados de 2022 (medidos pelos votos de cada município)
+    const municipal = (a === 2024 && (cargo === "PREFEITO" || cargo === "VEREADOR")) || (a === 2022 && (cargo === "DEPUTADO FEDERAL" || cargo === "DEPUTADO ESTADUAL"));
     const g = municipal
       ? await consulta(
           `SELECT grupo_ordem, municipios, eleitos, anos_eleitorado_min, anos_eleitorado_max, anos_eleitorado_medio,
-       anos_eleitos_medio, pct_superior_eleitorado, pct_superior_eleitos
+       anos_eleitos_medio, pct_superior_eleitorado, pct_superior_eleitos, anos_votados_medio, pct_superior_votados
 FROM mv_q4_grupos
-WHERE cargo = $1 AND uf = $2
+WHERE ano = $1 AND cargo = $2 AND uf = $3
 ORDER BY grupo_ordem`,
-          [cargo, uf],
+          [a, cargo, uf],
         )
       : { sql: "", linhas: [] };
     const c = municipal
-      ? await consulta("SELECT municipios, correlacao, inclinacao FROM mv_q4_correlacao WHERE cargo = $1 AND uf = $2", [cargo, uf])
+      ? await consulta(
+          "SELECT municipios, correlacao, inclinacao, correlacao_votados FROM mv_q4_correlacao WHERE ano = $1 AND cargo = $2 AND uf = $3",
+          [a, cargo, uf],
+        )
       : { sql: "", linhas: [] };
     return {
       sql: [s.sql, r.sql, g.sql, c.sql].filter(Boolean).join(";\n\n") + ";",
       dados: { sucesso: s.linhas, representacao: r.linhas, grupos: g.linhas, correlacao: c.linhas[0] ?? null, municipal },
+    };
+  }),
+);
+
+// ---------------------------------------------------------------- Q5
+const CARGOS_Q5 = ["DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "VEREADOR"];
+app.get(
+  "/api/q5",
+  rota(async (req) => {
+    const a = ano(req.query.ano);
+    const cargo = CARGOS_Q5.includes(texto(req.query.cargo)) ? texto(req.query.cargo) : "VEREADOR";
+    const uf = texto(req.query.uf) || "TODAS";
+    const r = await consulta(
+      `SELECT circunscricoes, vagas, eleitos, eleitos_por_legenda, pct_por_legenda, faixa_100_mais, faixa_50_99, faixa_20_49, faixa_menos_20,
+       fora_dos_mais_votados, pct_fora_dos_mais_votados, mediana_pct_quociente, votos_validos, votos_legenda, pct_votos_legenda
+FROM mv_q5_resumo
+WHERE ano = $1 AND cargo = $2 AND uf = $3`,
+      [a, cargo, uf],
+    );
+    const p = await consulta(
+      `SELECT partido, eleitos, eleitos_por_legenda, pct_por_legenda, eleitos_votos_proprios, fora_dos_mais_votados, votos_nominais, votos_legenda,
+       pct_votos_legenda, posicao
+FROM mv_q5_partido
+WHERE ano = $1 AND cargo = $2 AND uf = $3
+ORDER BY posicao`,
+      [a, cargo, uf],
+    );
+    const menos = await consulta(
+      `SELECT e.nome_urna, e.partido, e.sg_uf, m.nome AS municipio, e.votos, e.quociente, e.pct_do_quociente, e.posicao_votos, e.vagas
+FROM mv_q5_eleito e
+LEFT JOIN municipio m ON m.cod_ibge = e.cod_ibge
+WHERE e.ano = $1 AND e.cargo = $2 AND ($3 = 'TODAS' OR e.sg_uf = $3)
+ORDER BY e.pct_do_quociente, e.votos, e.nome_urna
+LIMIT 10`,
+      [a, cargo, uf],
+    );
+    const barrados = await consulta(
+      `SELECT b.nome_urna, b.partido, b.sg_uf, m.nome AS municipio, b.votos, b.quociente, b.pct_do_quociente, b.posicao_votos, b.vagas
+FROM mv_q5_barrado b
+LEFT JOIN municipio m ON m.cod_ibge = b.cod_ibge
+WHERE b.ano = $1 AND b.cargo = $2 AND ($3 = 'TODAS' OR b.sg_uf = $3)
+ORDER BY b.votos DESC, b.nome_urna
+LIMIT 10`,
+      [a, cargo, uf],
+    );
+    return {
+      sql: [r.sql, p.sql, menos.sql, barrados.sql].join(";\n\n") + ";",
+      dados: { resumo: r.linhas[0] ?? null, partidos: p.linhas, menos: menos.linhas, barrados: barrados.linhas },
     };
   }),
 );

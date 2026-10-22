@@ -1,7 +1,7 @@
 # Site de apresentação — Eleições em Dados
 
-Página única que mostra a carga do banco `eleicoes_v2`, o tratamento de identidade, e as perguntas 1, 2, 3, 4, 6, 8, 9 e 10.
-Tudo é consultado ao vivo no PostgreSQL, **somente por views** (`dados/questoes/carga_v2/views_v2.sql`, `views_q2.sql`, `views_q3.sql`, `views_q4.sql`, `views_q6.sql`, `views_q8.sql` e `views_q9.sql`).
+Página única que mostra a carga do banco `eleicoes_v2`, o tratamento de identidade, e as perguntas 1, 2, 3, 4, 5, 6, 8, 9 e 10.
+Tudo é consultado ao vivo no PostgreSQL, **somente por views** (`dados/questoes/carga_v2/views_v2.sql`, `views_q2.sql`, `views_q3.sql`, `views_q4.sql`, `views_q5.sql`, `views_q6.sql`, `views_q8.sql` e `views_q9.sql`).
 
 ```
 navegador (React, src/)  ──/api──>  API (Express, server/index.ts)  ──SELECT──>  views do eleicoes_v2
@@ -58,6 +58,7 @@ Rode de novo o `views_v2.sql` no pgAdmin (ele recria as views e atualiza as mate
 | `src/secoes/Q2.tsx` | Taxa de sucesso eleitoral por patrimônio declarado (`views_q2.sql`) |
 | `src/secoes/Q3.tsx` | IDHM e PIB per capita × abstenção, brancos, nulos e partidos eleitos, 2008 e 2012 (`views_q3.sql`) |
 | `src/secoes/Q4.tsx` | Escolaridade do candidato, do eleito e do eleitorado (`views_q4.sql`) |
+| `src/secoes/Q5.tsx` | Eleitos por votos de legenda: quociente eleitoral, partidos, menos votados e barrados (`views_q5.sql`) |
 | `src/secoes/Q6.tsx` | Idade do município, idade dos eleitos e alternância de poder (`views_q6.sql`) |
 | `src/secoes/Q8.tsx` | Dinheiro público x privado e desempenho eleitoral (`views_q8.sql`) |
 | `src/secoes/Q9.tsx` | Gasto por categoria e nuvem de palavras das despesas (`views_q9.sql`) |

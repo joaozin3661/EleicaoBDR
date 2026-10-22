@@ -2,9 +2,11 @@
    Rodar no pgAdmin depois de importar_eleitorado.py. Depois de recarregar os dados, rode de novo.
 
    Parte 1 (2022 e 2024): a escolaridade do candidato se relaciona a ser eleito?
-   Parte 2 (so 2024): municipios com eleitorado de menor escolaridade elegem candidatos de menor escolaridade?
-   A parte 2 so vale em eleicao municipal, em que os eleitos pertencem a um municipio. Em 2022 (deputados, governador e
-   senador) a comparacao e feita no nivel do estado. */
+   Parte 2 (2024 e 2022): municipios com eleitorado de menor escolaridade elegem candidatos de menor escolaridade?
+   2024 (prefeito e vereador): os eleitos pertencem ao municipio.
+   2022 (deputado federal e estadual): os eleitos representam o estado, entao a escolaridade "dos eleitos" de cada municipio e medida
+   pelos votos: a media da escolaridade dos eleitos ponderada pelos votos que o municipio deu a eles (precisa de importar_q5.py).
+   Governador e senador de 2022 ficam fora da parte 2: seus votos por municipio nao foram carregados. */
 
 DROP MATERIALIZED VIEW IF EXISTS mv_q4_correlacao CASCADE;
 DROP MATERIALIZED VIEW IF EXISTS mv_q4_grupos CASCADE;
@@ -83,59 +85,82 @@ FROM junto
 WINDOW w AS (PARTITION BY ano, cargo, uf);
 CREATE INDEX ix_mv_q4_repr ON mv_q4_representacao (ano, cargo, uf);
 
-/* Parte 2: cada municipio de 2024, com a escolaridade media do eleitorado e a dos eleitos (anos de estudo
-   equivalentes), e o grupo (1 = eleitorado de menor escolaridade ... 4 = maior), em quartis dos 1.238 municipios. */
+/* Parte 2: cada municipio, por eleicao, com a escolaridade media do eleitorado e a dos eleitos (anos de estudo equivalentes),
+   e o grupo (1 = eleitorado de menor escolaridade ... 4 = maior), em quartis dos 1.238 municipios de cada eleicao.
+   peso = o que pondera o municipio ao somar grupos: numero de eleitos (2024) ou votos que o municipio deu aos eleitos (2022).
+   anos_votados (so 2022) e a mesma media sobre todos os candidatos votados, eleitos ou nao; votos_candidatos e o peso dela. */
 CREATE MATERIALIZED VIEW mv_q4_municipio AS
 WITH ele AS (
-  SELECT e.cod_ibge,
+  SELECT e.id_eleicao AS ano, e.cod_ibge,
          SUM(e.qtd_eleitores * g.anos_estudo)::numeric / SUM(e.qtd_eleitores) AS anos_eleitorado,
          100.0 * SUM(e.qtd_eleitores) FILTER (WHERE g.ordem = 7) / SUM(e.qtd_eleitores) AS pct_superior_eleitorado,
          SUM(e.qtd_eleitores) AS aptos
   FROM eleitorado e
   JOIN vw_q4_grau g ON g.grau = e.grau_instrucao
-  WHERE e.id_eleicao = 2024 AND e.turno = 1
-  GROUP BY e.cod_ibge),
+  WHERE e.id_eleicao IN (2022, 2024) AND e.turno = 1
+  GROUP BY e.id_eleicao, e.cod_ibge),
 grupo AS (
-  SELECT cod_ibge, anos_eleitorado, pct_superior_eleitorado, aptos,
-         NTILE(4) OVER (ORDER BY anos_eleitorado, cod_ibge) AS grupo_ordem
+  SELECT ano, cod_ibge, anos_eleitorado, pct_superior_eleitorado, aptos,
+         NTILE(4) OVER (PARTITION BY ano ORDER BY anos_eleitorado, cod_ibge) AS grupo_ordem
   FROM ele),
-eleitos AS (
-  SELECT cod_ibge, cargo, COUNT(*) AS eleitos, AVG(anos_estudo) AS anos_eleitos,
-         100.0 * COUNT(*) FILTER (WHERE ordem = 7) / COUNT(*) AS pct_superior_eleitos
+e24 AS (
+  SELECT 2024 AS ano, cod_ibge, cargo, COUNT(*)::numeric AS eleitos, NULL::numeric AS votos_para_eleitos,
+         AVG(anos_estudo) AS anos_eleitos,
+         100.0 * COUNT(*) FILTER (WHERE ordem = 7) / COUNT(*) AS pct_superior_eleitos,
+         NULL::numeric AS anos_votados, NULL::numeric AS pct_superior_votados, NULL::numeric AS votos_candidatos,
+         COUNT(*)::numeric AS peso
   FROM vw_q4_candidato
   WHERE ano = 2024 AND eleito AND cargo IN ('PREFEITO', 'VEREADOR')
-  GROUP BY cod_ibge, cargo)
-SELECT m.cod_ibge, m.nome, m.uf, el.cargo, g.aptos, g.anos_eleitorado, g.pct_superior_eleitorado,
-       el.eleitos, el.anos_eleitos, el.pct_superior_eleitos, g.grupo_ordem
+  GROUP BY cod_ibge, cargo),
+v22 AS (
+  SELECT 2022 AS ano, v.cod_ibge, c.cargo, NULL::numeric AS eleitos,
+         SUM(v.votos_nominais) FILTER (WHERE c.eleito)::numeric AS votos_para_eleitos,
+         SUM(v.votos_nominais * c.anos_estudo) FILTER (WHERE c.eleito)::numeric / NULLIF(SUM(v.votos_nominais) FILTER (WHERE c.eleito), 0) AS anos_eleitos,
+         100.0 * SUM(v.votos_nominais) FILTER (WHERE c.eleito AND c.ordem = 7) / NULLIF(SUM(v.votos_nominais) FILTER (WHERE c.eleito), 0) AS pct_superior_eleitos,
+         SUM(v.votos_nominais * c.anos_estudo)::numeric / NULLIF(SUM(v.votos_nominais), 0) AS anos_votados,
+         100.0 * SUM(v.votos_nominais) FILTER (WHERE c.ordem = 7) / NULLIF(SUM(v.votos_nominais), 0) AS pct_superior_votados,
+         SUM(v.votos_nominais)::numeric AS votos_candidatos,
+         SUM(v.votos_nominais) FILTER (WHERE c.eleito)::numeric AS peso
+  FROM votacao v
+  JOIN vw_q4_candidato c ON c.id_candidatura = v.id_candidatura
+  WHERE v.turno = 1 AND c.ano = 2022 AND c.cargo IN ('DEPUTADO FEDERAL', 'DEPUTADO ESTADUAL')
+  GROUP BY v.cod_ibge, c.cargo),
+el AS (SELECT * FROM e24 UNION ALL SELECT * FROM v22)
+SELECT g.ano, m.cod_ibge, m.nome, m.uf, el.cargo, g.aptos, g.anos_eleitorado, g.pct_superior_eleitorado,
+       el.eleitos, el.votos_para_eleitos, el.anos_eleitos, el.pct_superior_eleitos, el.anos_votados, el.pct_superior_votados,
+       el.votos_candidatos, el.peso, g.grupo_ordem
 FROM municipio m
 JOIN grupo g ON g.cod_ibge = m.cod_ibge
-JOIN eleitos el ON el.cod_ibge = m.cod_ibge;
-CREATE INDEX ix_mv_q4_mun ON mv_q4_municipio (cargo, uf, grupo_ordem);
+JOIN el ON el.cod_ibge = m.cod_ibge AND el.ano = g.ano
+WHERE el.peso > 0;
+CREATE INDEX ix_mv_q4_mun ON mv_q4_municipio (ano, cargo, uf, grupo_ordem);
 
-/* Resumo por grupo de municipio (eleitos pesados por pessoa: cada vereador conta uma vez) */
+/* Resumo por grupo de municipio (grupo_ordem 0 = todos). Medias dos eleitos ponderadas pelo peso do municipio:
+   cada vereador conta uma vez (2024); cada voto dado a um eleito conta uma vez (2022). */
 CREATE MATERIALIZED VIEW mv_q4_grupos AS
-WITH base AS (
-  SELECT mu.cargo, mu.uf, mu.grupo_ordem, mu.cod_ibge, mu.anos_eleitorado, mu.pct_superior_eleitorado, mu.eleitos, mu.anos_eleitos,
-         mu.pct_superior_eleitos
-  FROM mv_q4_municipio mu)
-SELECT cargo, COALESCE(uf, 'TODAS') AS uf, COALESCE(grupo_ordem, 0) AS grupo_ordem,
+SELECT ano, cargo, COALESCE(uf, 'TODAS') AS uf, COALESCE(grupo_ordem, 0) AS grupo_ordem,
        COUNT(*) AS municipios,
        SUM(eleitos) AS eleitos,
+       SUM(votos_para_eleitos) AS votos_para_eleitos,
        ROUND(AVG(anos_eleitorado), 2) AS anos_eleitorado_medio,
        ROUND(MIN(anos_eleitorado), 2) AS anos_eleitorado_min,
        ROUND(MAX(anos_eleitorado), 2) AS anos_eleitorado_max,
        ROUND(AVG(pct_superior_eleitorado), 1) AS pct_superior_eleitorado,
-       ROUND((SUM(anos_eleitos * eleitos) / SUM(eleitos))::numeric, 2) AS anos_eleitos_medio,
-       ROUND((SUM(pct_superior_eleitos * eleitos) / SUM(eleitos))::numeric, 1) AS pct_superior_eleitos
-FROM base
-GROUP BY GROUPING SETS ((cargo, uf, grupo_ordem), (cargo, grupo_ordem), (cargo, uf), (cargo));
-CREATE INDEX ix_mv_q4_grupos ON mv_q4_grupos (cargo, uf);
+       ROUND((SUM(anos_eleitos * peso) / SUM(peso))::numeric, 2) AS anos_eleitos_medio,
+       ROUND((SUM(pct_superior_eleitos * peso) / SUM(peso))::numeric, 1) AS pct_superior_eleitos,
+       ROUND((SUM(anos_votados * votos_candidatos) / NULLIF(SUM(votos_candidatos), 0))::numeric, 2) AS anos_votados_medio,
+       ROUND((SUM(pct_superior_votados * votos_candidatos) / NULLIF(SUM(votos_candidatos), 0))::numeric, 1) AS pct_superior_votados
+FROM mv_q4_municipio
+GROUP BY GROUPING SETS ((ano, cargo, uf, grupo_ordem), (ano, cargo, grupo_ordem), (ano, cargo, uf), (ano, cargo));
+CREATE INDEX ix_mv_q4_grupos ON mv_q4_grupos (ano, cargo, uf);
 
 /* Correlacao municipio a municipio: escolaridade do eleitorado x escolaridade dos eleitos
-   (inclinacao = anos de estudo a mais nos eleitos para cada ano a mais no eleitorado) */
+   (inclinacao = anos de estudo a mais nos eleitos para cada ano a mais no eleitorado).
+   correlacao_votados (so 2022) usa a media de todos os candidatos votados, nao so dos eleitos. */
 CREATE MATERIALIZED VIEW mv_q4_correlacao AS
-SELECT cargo, COALESCE(uf, 'TODAS') AS uf, COUNT(*) AS municipios,
+SELECT ano, cargo, COALESCE(uf, 'TODAS') AS uf, COUNT(*) AS municipios,
        ROUND(corr(anos_eleitorado, anos_eleitos)::numeric, 3) AS correlacao,
-       ROUND(regr_slope(anos_eleitos, anos_eleitorado)::numeric, 3) AS inclinacao
+       ROUND(regr_slope(anos_eleitos, anos_eleitorado)::numeric, 3) AS inclinacao,
+       ROUND(corr(anos_eleitorado, anos_votados)::numeric, 3) AS correlacao_votados
 FROM mv_q4_municipio
-GROUP BY GROUPING SETS ((cargo, uf), (cargo));
+GROUP BY GROUPING SETS ((ano, cargo, uf), (ano, cargo));

@@ -32,7 +32,7 @@ a { color: var(--accent); }
 <a class="voltar" href="./">← Voltar ao site</a>
 <h1>Justificativa dos dados e das decisões metodológicas</h1>
 <p>Projeto de Banco de Dados Relacional (UFPI): banco <code>eleicoes_v2</code> no PostgreSQL, com dados eleitorais do TSE de seis estados
-(AL, PA, PB, PR, SC e SE, 1.238 municípios). Este documento cobre as perguntas <strong>1, 2, 3, 4, 6, 8, 9 e 10</strong>, as já respondidas.
+(AL, PA, PB, PR, SC e SE, 1.238 municípios). Este documento cobre as perguntas <strong>1, 2, 3, 4, 5, 6, 8, 9 e 10</strong>, as já respondidas.
 Para cada uma: que dados foram usados e por quê, que decisões foram tomadas, o que foi conferido e o que ficou como limitação.</p>
 <p>Os números citados foram lidos do banco ou dos arquivos de carga durante a construção. As consultas que os produzem estão
 nos arquivos <code>views_*.sql</code> e aparecem no site, no botão &quot;Ver o SQL executado no banco&quot; de cada bloco.</p>
@@ -374,10 +374,11 @@ grau são mostrados ao lado.</li>
 <li><strong>Fora da comparação:</strong> &quot;não informado&quot; (eleitor, 0,00% a 0,02%) e &quot;não divulgável&quot; (candidato, 1 caso em 2024).</li>
 <li><strong>Analfabeto aparece só no eleitorado</strong> (3,8% a 4,3%): nenhum candidato declarou esse grau, e o grupo foi mantido nos gráficos para a distribuição do
 eleitorado somar 100%.</li>
-<li><strong>Parte 2 só para 2024, em nível de município.</strong> Em eleição municipal, prefeito e vereador pertencem a um município e dá para comparar município a
-município. Em 2022 os eleitos são deputados, governador e senador, que representam o estado; ali a comparação é entre o eleitorado do estado e os
-eleitos do estado. Fazer por município em 2022 exigiria os votos de cada candidato por município (arquivos de 4 GB) para medir a escolaridade dos
-votados, e não foi feito.</li>
+<li><strong>Parte 2 em nível de município, em dois formatos.</strong> Em 2024, prefeito e vereador pertencem a um município, e a comparação é município a município
+(escolaridade média dos eleitos do município, uma pessoa um peso). Em 2022 os eleitos são deputados, que representam o estado; ali a escolaridade &quot;dos
+eleitos&quot; de um município é medida <strong>pelos votos</strong>: a média da escolaridade dos deputados eleitos, ponderada pelos votos que o município deu a eles
+(usa a tabela <code>votacao</code>, carregada para a Q5). Como medida complementar, a média sobre todos os candidatos votados, eleitos ou não. A parte 2 de 2022
+cobre deputado federal e estadual; <strong>governador e senador ficam fora</strong>, porque os votos por município deles não foram carregados.</li>
 <li><strong>Grupos de município</strong> pelos quartis da escolaridade média do eleitorado nos 1.238 municípios (1º quarto = eleitorado menos escolarizado). Ao escolher
 um estado, só mudam os municípios mostrados, não os cortes.</li>
 </ul>
@@ -425,14 +426,166 @@ Deputado federal 2022: 6,9% contra 2,3% (3,0×).</p>
 (correlação 0,47; cada ano de estudo a mais no eleitorado vai com 0,59 ano a mais nos eleitos). Nos municípios de eleitorado menos escolarizado, 27,6% dos
 vereadores eleitos têm superior completo; nos de eleitorado mais escolarizado, 49,9%. Para prefeito a correlação é fraca (0,15). Mas em <strong>todos os grupos</strong> os
 eleitos são mais escolarizados que o eleitorado (cerca de 4 anos de estudo equivalentes a mais): o eleitorado &quot;parecido com o eleito&quot; não existe em nenhum grupo.</p>
+<p><strong>Parte 2, deputados em 2022: quase nenhuma relação.</strong> O eleitorado dos quartos de município vai de 6,4 a 9,5 anos de estudo equivalentes, mas a escolaridade dos
+deputados que cada grupo de municípios elege (ponderada pelos votos) fica praticamente parada.</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>2022</th>
+<th>Eleitorado, do 1º ao 4º quarto</th>
+<th>Eleitos, do 1º ao 4º quarto</th>
+<th>Correlação município a município</th>
+<th>Eleitos com superior, do 1º ao 4º quarto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deputado federal</td>
+<td>6,4 / 7,6 / 8,5 / 9,5</td>
+<td>15,5 / 15,5 / 15,6 / 15,5</td>
+<td>0,11 (fraca; 0,22 com todos os votados)</td>
+<td>80,1% / 83,4% / 88,5% / 86,9%</td>
+</tr>
+<tr>
+<td>Deputado estadual</td>
+<td>6,4 / 7,6 / 8,5 / 9,5</td>
+<td>14,8 / 15,1 / 15,2 / 15,3</td>
+<td>0,05 (praticamente nenhuma; 0,07 com todos os votados)</td>
+<td>68,6% / 76,8% / 80,3% / 82,9%</td>
+</tr>
+</tbody></table></div>
+<p>Qualquer município, de eleitorado mais ou menos escolarizado, vota em deputados com escolaridade média de 15 anos de estudo equivalentes (superior completo é 16), contra 8,0 do eleitorado:
+mais do que em 2024, a diferença entre quem vota e quem é eleito é de mais de 7 anos. Em Santa Catarina a correlação do deputado federal é até negativa (-0,20), mas com 295 municípios.</p>
 <h3>4.4 Conferência</h3>
 <p>Taxa de sucesso por grau em quatro combinações, a distribuição eleitorado, candidatos e eleitos em três, os grupos de município e a correlação foram recalculados
-em pandas a partir dos CSVs, sem usar as views, <strong>sem nenhuma diferença</strong>.</p>
+em pandas a partir dos CSVs, sem usar as views, <strong>sem nenhuma diferença</strong>. A parte 2 de 2022 foi conferida à parte: 20 grupos (deputado federal e estadual, nos 6 estados e no Pará, de todos os
+municípios e de cada quarto) e as correlações e inclinações (6 estados e Santa Catarina), também <strong>sem diferença</strong>. Os resultados de 2024 não mudaram com a ampliação das views.</p>
 <p><strong>Limitações:</strong> a escolaridade do candidato é autodeclarada. A do eleitor é a do cadastro eleitoral, que pode estar desatualizada. A associação entre estudo e
-eleição não é causal: quem tem mais estudo também tende a ter mais patrimônio, mais estrutura de campanha e partidos maiores (a tela diz isso). A parte 2 não
-foi feita por município em 2022.</p>
+eleição não é causal: quem tem mais estudo também tende a ter mais patrimônio, mais estrutura de campanha e partidos maiores (a tela diz isso). A parte 2 de 2022 mede a escolaridade
+dos eleitos pelos votos do município, não por quem o município &quot;elegeu&quot; (o deputado representa o estado); e não cobre governador e senador.</p>
 <hr>
-<h2>6. Pergunta 6: a idade do município se reflete em quem ele elege?</h2>
+<h2>6. Pergunta 5: quantos eleitos de cada partido entraram por votos de legenda?</h2>
+<p><strong>Escopo.</strong> Eleições proporcionais dos seis estados: deputado federal e estadual (2018 e 2022) e vereador (2020 e 2024). Para deputado a disputa é o estado;
+para vereador, o município. São 2.494 disputas.</p>
+<p><strong>Definição escolhida (combinada com o usuário).</strong> Um eleito é &quot;por legenda&quot; quando seus <strong>votos nominais ficaram abaixo do quociente eleitoral</strong> da disputa.
+Sozinho ele não teria feito uma vaga; o partido o levou. O quociente eleitoral é votos válidos (nominais + legenda) dividido pelas vagas, com a fração arredondada como
+no Código Eleitoral (art. 106: desprezada se igual ou inferior a meio, 1 se superior). Em vez de &quot;refazer a distribuição sem votos de legenda&quot; (que exigiria reimplementar
+as regras de cada eleição, com coligações em 2018 e federações em 2022), usamos esta medida, que se calcula direto dos dados.</p>
+<p><strong>Dados.</strong></p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>O quê</th>
+<th>Fonte</th>
+<th>Tabela no banco</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Votos nominais válidos por candidato e município</td>
+<td>TSE, votação por candidato em município e zona (arquivos de 2 a 3 GB por ano, lidos em blocos)</td>
+<td><code>votacao</code> (2,29 milhões de linhas)</td>
+</tr>
+<tr>
+<td>Votos de legenda válidos por partido, município e cargo</td>
+<td>TSE, votação por partido em município e zona</td>
+<td><code>votacao_legenda</code> (165,7 mil linhas)</td>
+</tr>
+<tr>
+<td>Vagas</td>
+<td>tabela <code>vaga</code> (já carregada)</td>
+<td><code>vaga</code></td>
+</tr>
+<tr>
+<td>Quem foi eleito, e o partido</td>
+<td>tabela <code>candidatura</code></td>
+<td><code>candidatura</code> (<code>total_votos</code> agora preenchido)</td>
+</tr>
+</tbody></table></div>
+<p>Os votos de legenda incluem os &quot;nominais convertidos em legenda&quot; (candidatos indeferidos cujos votos o TSE reverte ao partido), como na coluna
+<code>QT_TOTAL_VOTOS_LEG_VALIDOS</code> do TSE. Votos de candidatos anulados não entram.</p>
+<p><strong>Conferência dos votos válidos com o TSE.</strong> Para cada município e cargo, nominais + legenda foram comparados ao total de votos válidos oficial (<code>QT_TOTAL_VOTOS_VALIDOS</code> do detalhe da votação).
+Em 2018, 2020 e 2022 a igualdade é <strong>exata em todas as disputas</strong> (35,2, 18,4 e 39,3 milhões de votos válidos). O quociente depende dessa soma.</p>
+<p><strong>Municípios excluídos.</strong> Em 2024, seis municípios não passaram na conferência e saem da Q5: <strong>Ananindeua, Breu Branco, Placas, Rurópolis e Nossa Senhora das Dores</strong>, onde o TSE não
+publicou votos de vereador por candidato nem por partido (e todos os candidatos estão sem resultado), e <strong>Melgaço</strong>, onde parte da votação foi refeita em 17/05/2026 e os arquivos ficaram incompletos.
+Sobram 1.232 municípios em 2024 (12.646 eleitos, que é exatamente o número de vagas dessas disputas). O total de vagas de 2024 no banco (12.730) inclui esses seis.</p>
+<p><strong>Medidas.</strong> Além da definição principal, três leituras complementares:</p>
+<ul>
+<li><strong>Faixa do quociente:</strong> quanto do quociente o eleito fez sozinho (100% ou mais, 50 a 99%, 20 a 49%, menos de 20%) e a mediana.</li>
+<li><strong>Fora dos mais votados:</strong> o eleito não está entre os N candidatos mais votados da disputa (N = vagas), isto é, ocupa a vaga de alguém com mais votos. É a medida mais sensível,
+porque a definição principal é quase estrutural (abaixo).</li>
+<li><strong>Mais votados que não se elegeram (&quot;barrados&quot;):</strong> candidatos entre os N mais votados sem vaga (3.670 no total, 3.186 deles suplentes).</li>
+</ul>
+<p><strong>Resultados</strong> (6 estados).</p>
+<div class="tabela"><table>
+<thead>
+<tr>
+<th>Eleição e cargo</th>
+<th>Eleitos</th>
+<th>Por legenda (abaixo do quociente)</th>
+<th>Fora dos mais votados</th>
+<th>Mediana dos votos próprios (% do quociente)</th>
+<th>Votos de legenda no total</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2018 deputado federal</td>
+<td>92</td>
+<td>88 (95,7%)</td>
+<td>10 (10,9%)</td>
+<td>49,8%</td>
+<td>6,3%</td>
+</tr>
+<tr>
+<td>2018 deputado estadual</td>
+<td>222</td>
+<td>220 (99,1%)</td>
+<td>22 (9,9%)</td>
+<td>47,2%</td>
+<td>7,7%</td>
+</tr>
+<tr>
+<td>2020 vereador</td>
+<td>12.621</td>
+<td>12.400 (98,2%)</td>
+<td>1.878 (14,9%)</td>
+<td>43,3%</td>
+<td>5,1%</td>
+</tr>
+<tr>
+<td>2022 deputado federal</td>
+<td>92</td>
+<td>87 (94,6%)</td>
+<td>11 (12,0%)</td>
+<td>47,5%</td>
+<td>3,6%</td>
+</tr>
+<tr>
+<td>2022 deputado estadual</td>
+<td>222</td>
+<td>216 (97,3%)</td>
+<td>22 (9,9%)</td>
+<td>50,4%</td>
+<td>6,2%</td>
+</tr>
+<tr>
+<td>2024 vereador</td>
+<td>12.646</td>
+<td>12.333 (97,5%)</td>
+<td>1.659 (13,1%)</td>
+<td>46,5%</td>
+<td>3,2%</td>
+</tr>
+</tbody></table></div>
+<p><strong>Leitura.</strong> Entre <strong>94,6% e 99,1%</strong> dos eleitos têm votos nominais abaixo do quociente. Isso não é uma peculiaridade dos partidos: o quociente é o preço de uma vaga do partido, e no
+sistema proporcional de lista aberta quase ninguém o alcança sozinho. A tela explica isso. O que distingue partidos e disputas é a medida de &quot;fora dos mais votados&quot; (de 9,9% a 14,9% dos eleitos) e a participação dos
+votos de legenda (3% a 8% dos votos válidos). Exemplo: em 2022, para deputado federal, só 5 dos 92 eleitos atingiram o quociente sozinhos; em 2020, houve vereadores de municípios pequenos eleitos
+com menos de 10% do quociente.</p>
+<p><strong>Verificação independente.</strong> Um script em pandas, lendo os CSVs de carga e sem usar as views, recalculou o quociente e os votos válidos das 2.494 disputas, todos os grupos do resumo (ano, cargo, UF e faixas)
+e as contagens de eleitos por partido (689 combinações): <strong>0 divergências</strong>. Em toda disputa o número de eleitos é igual ao número de vagas. Um teste de consistência independente do quociente: em 2020 (sem
+coligação nem federação), em 99,96% dos 4.710 casos em que o partido atingiu o quociente, o número de eleitos &quot;por quociente partidário&quot; do TSE é exatamente <code>votos do partido ÷ quociente</code>, e em nenhum caso foi maior.</p>
+<p><strong>Limitações da Q5.</strong> A definição principal é quase estrutural (ver acima), por isso há medidas complementares. O partido é o do candidato; coligações (2018) e federações (2022) somam votos e vagas e não aparecem separadas. A medida não refaz a distribuição
+de vagas sem os votos de legenda (definição B, descartada pela complexidade das regras). Seis municípios de 2024 ficam de fora por dados incompletos no TSE. Eleições suplementares são descartadas, como nas demais perguntas.</p>
+<hr>
+<h2>7. Pergunta 6: a idade do município se reflete em quem ele elege?</h2>
 <p><strong>A pergunta:</strong> se a estrutura etária do município se reflete em quem ele elege: classificar cada município como mais jovem ou mais
 envelhecido, ver a idade média dos eleitos ali e observar se há tendência de alternância de poder entre os pleitos.</p>
 <p><strong>Dados usados</strong></p>
@@ -525,7 +678,7 @@ fundiram, o que pode subestimar um pouco a alternância, por exemplo uma troca e
 municípios não têm prefeito eleito nos dados (eleição anulada ou sem resultado) e ficam fora da comparação. A data de nascimento é autodeclarada. A
 correlação fraca é um resultado, mas é um resultado sobre associação, não sobre causa.</p>
 <hr>
-<h2>7. Pergunta 8: recursos públicos ou privados, quem se elege?</h2>
+<h2>8. Pergunta 8: recursos públicos ou privados, quem se elege?</h2>
 <p><strong>A pergunta:</strong> se candidatos financiados majoritariamente por repasses públicos têm desempenho diferente dos sustentados por doações
 privadas e recursos próprios.</p>
 <p><strong>Dados usados</strong></p>
@@ -663,7 +816,7 @@ receitas por fonte em 2022 no banco (R$ 763,1 mi, R$ 81,8 mi e R$ 208,1 mi) é i
 <p><strong>Limitações:</strong> a classificação segue a do TSE; se o TSE registrar uma receita na fonte errada, o erro se propaga. O total das views (R$ 3.587,7 mi) é
 menor que o da tabela (R$ 3.622,4 mi) porque as views só contam candidatos elegíveis, sem vices e suplentes de senador.</p>
 <hr>
-<h2>8. Pergunta 9: onde o candidato investe em propaganda?</h2>
+<h2>9. Pergunta 9: onde o candidato investe em propaganda?</h2>
 <p><strong>Dados usados:</strong> a tabela <code>despesa</code> (a mesma da Q1), com <code>tipo_despesa</code> (41 categorias do TSE) e <code>descricao</code> (texto livre escrito pelo
 candidato, preenchido em 99% das despesas).</p>
 <p><strong>Por que esses dados:</strong> é a única fonte que descreve o que cada gasto foi. A categoria dá a classificação oficial; a descrição dá o detalhe que
@@ -684,7 +837,7 @@ em 2024). Nas descrições de vereador em 2024, as palavras mais frequentes são
 <p><strong>Limitações:</strong> a nuvem usa texto digitado pelos candidatos, então ainda sobram algumas abreviações e nomes próprios. O mesmo ponto das despesas
 repetidas da Q1 vale aqui.</p>
 <hr>
-<h2>9. Pergunta 10: sobrevivência da carreira de um político</h2>
+<h2>10. Pergunta 10: sobrevivência da carreira de um político</h2>
 <p><strong>Dados usados:</strong> as candidaturas de todos os doze pleitos (2002 a 2024), ligadas à <code>pessoa</code>, com cargo, partido da época, local e resultado.</p>
 <p><strong>Por que esses dados:</strong> a pergunta pede a trajetória de uma pessoa ao longo do tempo, e isso só existe se a mesma pessoa for reconhecida em
 eleições diferentes. Por isso a pergunta justifica a separação entre <code>PESSOA</code> e <code>CANDIDATURA</code> e todo o trabalho de identidade da seção 1.5. Um terço
@@ -704,7 +857,7 @@ candidatura com a anterior da mesma pessoa.</li>
 troca de partido (no exemplo acima, a &quot;troca&quot; de PMDB para MDB é só a mudança de nome do mesmo partido). Candidatos sem título de eleitor na origem (467) não
 são ligados a outras eleições; só 14 dariam para ligar por CPF ou nome, então o ganho não justificava uma regra a mais.</p>
 <hr>
-<h2>10. Resumo das limitações</h2>
+<h2>11. Resumo das limitações</h2>
 <div class="tabela"><table>
 <thead>
 <tr>
@@ -769,9 +922,9 @@ são ligados a outras eleições; só 14 dariam para ligar por CPF ou nome, ent�
 <td>declarado na tela</td>
 </tr>
 <tr>
-<td>Parte 2 da Q4 não feita por município em 2022</td>
+<td>Parte 2 da Q4 em 2022 mede a escolaridade dos eleitos pelos votos do município; governador e senador ficam fora</td>
 <td>Q4</td>
-<td>exigiria votos por município (4 GB)</td>
+<td>declarado na tela</td>
 </tr>
 <tr>
 <td>Índices (IDHM, PIB, população) de 2010 aplicados às eleições de 2008 e 2012</td>
@@ -794,13 +947,28 @@ são ligados a outras eleições; só 14 dariam para ligar por CPF ou nome, ent�
 <td>3 de 1.238</td>
 </tr>
 <tr>
+<td>Definição principal da Q5 é quase estrutural (94,6% a 99,1% dos eleitos ficam abaixo do quociente)</td>
+<td>Q5</td>
+<td>mitigada por medidas complementares</td>
+</tr>
+<tr>
+<td>Coligações (2018) e federações (2022) não aparecem separadas</td>
+<td>Q5</td>
+<td>declarado na tela</td>
+</tr>
+<tr>
+<td>Seis municípios de 2024 sem votos de vereador completos no TSE</td>
+<td>Q5</td>
+<td>6 de 1.238</td>
+</tr>
+<tr>
 <td>Seis estados</td>
 <td>todas</td>
 <td>recorte do projeto</td>
 </tr>
 </tbody></table></div>
 <hr>
-<h2>11. Onde está cada coisa</h2>
+<h2>12. Onde está cada coisa</h2>
 <div class="tabela"><table>
 <thead>
 <tr>
@@ -841,8 +1009,12 @@ são ligados a outras eleições; só 14 dariam para ligar por CPF ou nome, ent�
 <td>PIB e população de 2010 (SIDRA) e totalização por município 2008/2012 (Q3)</td>
 </tr>
 <tr>
-<td><code>views_q2.sql</code>, <code>views_q3.sql</code>, <code>views_q4.sql</code>, <code>views_q6.sql</code>, <code>views_q8.sql</code>, <code>views_q9.sql</code></td>
-<td>views das perguntas 2, 3, 4, 6, 8 e 9</td>
+<td><code>carga_q5.py</code>, <code>importar_q5.py</code></td>
+<td>votos por candidato e de legenda por partido (Q5)</td>
+</tr>
+<tr>
+<td><code>views_q2.sql</code>, <code>views_q3.sql</code>, <code>views_q4.sql</code>, <code>views_q5.sql</code>, <code>views_q6.sql</code>, <code>views_q8.sql</code>, <code>views_q9.sql</code></td>
+<td>views das perguntas 2, 3, 4, 5, 6, 8 e 9</td>
 </tr>
 <tr>
 <td><code>conferir_identidade.py</code></td>
