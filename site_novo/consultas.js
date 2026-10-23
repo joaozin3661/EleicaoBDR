@@ -36,7 +36,7 @@ const ufTxt = (u) => (u === "TODAS" ? "nos seis estados" : EM_UF[u]);
 /* ---------- blocos de tela ---------- */
 function kpis(itens) {
   return `<div class="kpis" style="--n:${itens.length}">${itens.map((k) => `
-    <div class="kpi${k.lider ? " lider" : ""}"><span>${k.rot}</span><b>${k.val}${k.uni ? ` <small>${k.uni}</small>` : ""}</b></div>`).join("")}</div>`;
+    <div class="kpi${k.lider ? " lider" : ""}${k.texto ? " kpi--texto" : ""}"><span>${k.rot}</span><b>${k.val}${k.uni ? ` <small>${k.uni}</small>` : ""}</b></div>`).join("")}</div>`;
 }
 function painel({ titulo: t, sub, span = 12, corpo, id }) {
   return `<section class="painel${span < 12 ? ` s${span}` : ""}"${id ? ` id="${id}"` : ""}>
@@ -490,30 +490,61 @@ const PERGUNTAS = {
       return { defs: [{ html: `<div class="campo busca-pessoa"><label for="q10-nome"><span>Buscar pelo nome</span></label><input id="q10-nome" type="search" autocomplete="off" placeholder="Ex.: Requião, Barbalho, Amin" role="combobox" aria-expanded="false" aria-controls="q10-sug"><div class="sugestoes" id="q10-sug" role="listbox" hidden></div></div>` }], inicial: { id: 2714 } };
     },
     async monta(f) {
-      const [r, idx, fp] = await Promise.all([resposta(`/api/q10/pessoa/${f.id}`), arquivo("q10_indice.json"), arquivo("site/fotos_pessoa.json").catch(() => ({}))]);
+      const [r, idx, fp, ce] = await Promise.all([resposta(`/api/q10/pessoa/${f.id}`), arquivo("q10_indice.json"), arquivo("site/fotos_pessoa.json").catch(() => ({})),
+        arquivo(`site/carreira/${Number(f.id) % 32}.json`).catch(() => null)]);
       const c = r.dados.carreira;
+      /* escolaridade e gasto de cada candidatura (vw_site_carreira), ligados por ano, cargo e local */
+      const ex = (ce?.pessoas[f.id] ?? []).map((l) => Object.fromEntries(ce.colunas.map((k, i) => [k, l[i]])));
+      const porCand = new Map(ex.map((e) => [`${e.ano}|${e.cargo}|${semAcento(e.local)}`, e]));
+      const extra = (x) => porCand.get(`${x.ano}|${x.cargo}|${semAcento(x.local)}`) ?? ex.find((e) => e.ano === x.ano && e.cargo === x.cargo);
+      const sentenca = (t) => t.charAt(0) + t.slice(1).toLowerCase();
+      const grau = (g) => (g ? sentenca(g.replace(/^ENSINO /, "")) : "Não informado");
+      const centavos = (v) => `R$ ${nf(2).format(v)}`;
+      const porVoto = (e) => (e?.votos > 0 && e.gasto != null ? e.gasto / e.votos : null);
+      const variacao = (de, para) => (de > 0 ? (para / de >= 1.95 ? `×${nf(1).format(para / de)}` : `${para >= de ? "+" : "−"}${nf(0).format(Math.abs(para / de - 1) * 100)}%`) : "");
+      const ex2 = c.map(extra);
+      const comConta = ex2.filter((e) => e && e.gasto !== null);
+      const graus = ex2.filter((e) => e?.grau_instrucao);
+      const pat = ex2.filter((e) => e && e.patrimonio != null);
+      const prop = ex2.filter((e) => porVoto(e) != null);
+      let antPat = null;
+      const fichas = ex2.map((e, i) => {
+        const ant = i ? ex2[i - 1] : null;
+        const itens = [["Escolaridade", grau(e?.grau_instrucao), "forte", ant && ant.grau_instrucao === e?.grau_instrucao],
+          ["Ocupação", e?.ocupacao ? sentenca(e.ocupacao) : "Não informada", "", ant && ant.ocupacao === e?.ocupacao]];
+        if (e?.gasto != null) {
+          itens.push(["Gasto", fmt.brlCurto(e.gasto), "forte"]);
+          const v = antPat > 0 ? variacao(antPat, e.patrimonio) : "";
+          itens.push(["Patrimônio", `${e.patrimonio > 0 ? fmt.brlCurto(e.patrimonio) : "nada declarado"}${v ? ` <small class="muted" title="Em relação ao patrimônio declarado na candidatura anterior">${v}</small>` : ""}`]);
+          antPat = e.patrimonio;
+          if (porVoto(e) != null) itens.push(["Votos", fmt.int(e.votos)], ["Custo por voto", centavos(porVoto(e))]);
+        }
+        return `<dl class="etapa__ficha">${itens.map(([t, v, cls, igual]) => `<div class="${cls}${igual ? " igual" : ""}"><dt>${t}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
+      });
       const fotos = fp[String(f.id)] ?? [];
       const porAno = new Map(fotos.map(([ano, idc]) => [ano, idc]));
       const ultima = fotos[fotos.length - 1];
       const achado = idx.indice.find((i) => i.achado.id_pessoa === Number(f.id))?.achado;
       const vit = c.filter((x) => x.resultado === "VITÓRIA").length;
       const partidos = [...new Set(c.map((x) => x.partido))];
-      const cargos = [...new Set(c.map((x) => x.cargo))];
       const nome = titulo(achado?.nome ?? r.dados.nomes[r.dados.nomes.length - 1]);
       return {
-        achado: `<b>${esc(nome)}</b> concorreu ${c.length} vezes de ${c[0].ano} a ${c[c.length - 1].ano} e venceu ${vit}, por ${partidos.length} ${partidos.length === 1 ? "partido" : "partidos"}.`,
+        achado: `<b>${esc(nome)}</b> ${c.length === 1 ? `concorreu uma vez, em ${c[0].ano}, pelo ${esc(c[0].partido)}, e ${vit ? "venceu" : "não venceu"}.` : `concorreu ${c.length} vezes de ${c[0].ano} a ${c[c.length - 1].ano} e venceu ${vit}, por ${partidos.length} ${partidos.length === 1 ? "partido" : "partidos"}.`}`,
         sql: [idx.sql.replaceAll("{{nome}}", nome.toUpperCase()), r.sql],
         html: kpis([
           { rot: "Candidaturas", val: fmt.int(c.length), lider: true },
           { rot: "Vitórias", val: fmt.int(vit) },
           { rot: "Partidos", val: fmt.int(partidos.length) },
-          { rot: "Cargos disputados", val: fmt.int(cargos.length) },
+          { rot: "Escolaridade", val: graus.length ? grau(graus[graus.length - 1].grau_instrucao) : "—", texto: true },
+          { rot: "Gasto desde 2018", val: comConta.length ? fmt.brlCurto(comConta.reduce((t, e) => t + e.gasto, 0)) : "—" },
+          { rot: pat.length ? `Patrimônio em ${pat[pat.length - 1].ano}` : "Patrimônio", val: pat.length ? fmt.brlCurto(pat[pat.length - 1].patrimonio) : "—", uni: pat.length > 1 ? `${variacao(pat[0].patrimonio, pat[pat.length - 1].patrimonio)} desde ${pat[0].ano}`.replace(/^ desde.*/, "") : "" },
+          { rot: "Custo por voto", val: prop.length ? centavos(porVoto(prop[prop.length - 1])) : "—", uni: prop.length ? `em ${prop[prop.length - 1].ano}` : "" },
         ]) + painel({
           titulo: nome, sub: `${r.dados.nomes.length > 1 ? `Também registrado como ${r.dados.nomes.filter((n) => titulo(n) !== nome).map((n) => esc(titulo(n))).join(", ")}. ` : ""}${achado?.data_nascimento ? `Nascido em ${achado.data_nascimento.split("-").reverse().join("/")}.` : ""}`,
-          corpo: `${ultima ? `<div class="pessoa-topo">${foto(ultima[1], `Foto de ${nome} no registro da candidatura de ${ultima[0]}`, "foto-g")}<p class="muted">Fotos do registro de cada candidatura no TSE, de 2018 em diante.</p></div>` : ""}<ol class="carreira">${c.map((x) => `
+          corpo: `${ultima ? `<div class="pessoa-topo">${foto(ultima[1], `Foto de ${nome} no registro da candidatura de ${ultima[0]}`, "foto-g")}<p class="muted">Fotos do registro de cada candidatura no TSE, de 2018 em diante. Gasto, patrimônio e votos só existem de 2018 em diante; para prefeito, governador e senador, os votos são os do 1º turno. Em cinza, o que repete a candidatura anterior.</p></div>` : ""}<ol class="carreira">${c.map((x, i) => `
             <li class="etapa"><span class="etapa__ano">${x.ano}</span><span class="etapa__foto">${porAno.has(x.ano) ? foto(porAno.get(x.ano), `Foto de ${nome} em ${x.ano}`) : ""}</span>
               <span class="etapa__o"><b>${esc(cargoTxt(x.cargo))}, ${esc(x.local.length === 2 ? x.local : titulo(x.local))}</b><span>${esc(x.partido)}${x.evento ? ` · ${esc(x.evento.charAt(0) + x.evento.slice(1).toLowerCase())}` : ""}${x.troca_partido ? ` · ${esc(x.troca_partido)}` : ""}</span></span>
-              <span class="selo${x.resultado === "VITÓRIA" ? " ganhou" : ""}">${x.resultado === "VITÓRIA" ? "Eleito" : esc(titulo(x.detalhe_resultado || x.resultado))}</span></li>`).join("")}</ol>`,
+              <span class="selo${x.resultado === "VITÓRIA" ? " ganhou" : ""}">${x.resultado === "VITÓRIA" ? "Eleito" : esc(titulo(x.detalhe_resultado || x.resultado))}</span>${fichas[i]}</li>`).join("")}</ol>`,
         }),
         depois: () => ligaBuscaPessoa(idx.indice),
       };

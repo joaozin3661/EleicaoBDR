@@ -30,10 +30,12 @@ for tabela, arq in (("votacao", "votacao.csv"), ("votacao_legenda", "votacao_leg
     n = cur.fetchone()[0]
     print(f"  {tabela:16s} banco {n:>10,} | csv {no_csv:>10,} | {'OK' if n == no_csv else 'DIFERENTE!'}")
 
-cur.execute("UPDATE candidatura SET total_votos = NULL WHERE total_votos IS NOT NULL")
+# só os cargos proporcionais: governador, senador e prefeito vêm de importar_votos_majoritarios.sql
+cur.execute("""UPDATE candidatura SET total_votos = NULL
+               WHERE total_votos IS NOT NULL AND cargo IN ('DEPUTADO FEDERAL', 'DEPUTADO ESTADUAL', 'VEREADOR')""")
 cur.execute("""UPDATE candidatura c SET total_votos = v.total
                FROM (SELECT id_candidatura, SUM(votos_nominais) AS total FROM votacao GROUP BY id_candidatura) v
-               WHERE v.id_candidatura = c.id_candidatura""")
+               WHERE v.id_candidatura = c.id_candidatura AND c.cargo IN ('DEPUTADO FEDERAL', 'DEPUTADO ESTADUAL', 'VEREADOR')""")
 print(f"  candidatura.total_votos preenchido em {cur.rowcount:,} candidaturas")
 cur.execute("""SELECT id_eleicao, cargo, count(*), count(total_votos) FROM candidatura
                WHERE cargo IN ('DEPUTADO FEDERAL', 'DEPUTADO ESTADUAL', 'VEREADOR') AND id_eleicao IN (2018, 2020, 2022, 2024)

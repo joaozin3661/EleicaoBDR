@@ -138,3 +138,35 @@ CREATE VIEW vw_site_candidatura_foto AS
 SELECT c.id_pessoa, c.id_eleicao AS ano, c.cargo, c.sg_uf, c.cod_ibge, c.nome_urna, c.sigla_partido, c.id_candidatura
 FROM candidatura c
 WHERE c.id_eleicao >= 2018;
+
+
+/* vw_site_carreira: uma linha por candidatura da carreira da Q10 (as mesmas que vw_q10_base escolhe), com o que o
+   site mostra de cada uma: grau de instrucao, ocupacao, votos e dinheiro.
+   - grau: o TSE grava "MEDIO COMPLETO" em alguns anos e "ENSINO MEDIO COMPLETO" em outros; aqui fica a forma de
+     vw_q4_grau. "NAO DIVULGAVEL" e "NAO INFORMADO" viram nulo.
+   - gasto, receita e patrimonio so existem de 2018 em diante (antes o banco nao tem prestacao de contas nem bens);
+     nesses anos ficam nulos, e nao zero. De 2018 em diante, zero quer dizer que nada foi declarado.
+   - receita_publica: Fundo Especial + Fundo Partidario, como em vw_q8_candidato. */
+
+DROP VIEW IF EXISTS vw_site_carreira;
+
+CREATE VIEW vw_site_carreira AS
+WITH grau AS (
+    SELECT c.id_candidatura,
+           CASE WHEN c.grau_instrucao IN ('FUNDAMENTAL COMPLETO', 'FUNDAMENTAL INCOMPLETO', 'MÉDIO COMPLETO', 'MÉDIO INCOMPLETO')
+                THEN 'ENSINO ' || c.grau_instrucao
+                ELSE c.grau_instrucao END AS grau
+    FROM candidatura c
+)
+SELECT b.id_pessoa, b.id_candidatura, b.ano, b.cargo, b.local,
+       g4.grau AS grau_instrucao, g4.ordem AS ordem_grau,
+       c.ocupacao, c.total_votos AS votos,
+       CASE WHEN b.ano >= 2018 THEN COALESCE((SELECT sum(d.valor) FROM despesa d WHERE d.id_candidatura = b.id_candidatura), 0) END AS gasto,
+       CASE WHEN b.ano >= 2018 THEN COALESCE((SELECT sum(r.valor) FROM receita r WHERE r.id_candidatura = b.id_candidatura), 0) END AS receita,
+       CASE WHEN b.ano >= 2018 THEN COALESCE((SELECT sum(r.valor) FROM receita r WHERE r.id_candidatura = b.id_candidatura
+                                               AND r.origem_recurso IN ('FUNDO ESPECIAL', 'FUNDO PARTIDARIO')), 0) END AS receita_publica,
+       CASE WHEN b.ano >= 2018 THEN COALESCE((SELECT sum(x.valor) FROM bem_declarado x WHERE x.id_candidatura = b.id_candidatura), 0) END AS patrimonio
+FROM vw_q10_base b
+JOIN candidatura c ON c.id_candidatura = b.id_candidatura
+JOIN grau g ON g.id_candidatura = b.id_candidatura
+LEFT JOIN vw_q4_grau g4 ON g4.grau = g.grau;

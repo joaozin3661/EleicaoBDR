@@ -272,8 +272,7 @@
     if (st.q === "q6" && m.partidos_prefeito) {
       const seq = m.partidos_prefeito.split(" ").map((p) => p.split(":"));
       extra = `<p class="sub" style="margin-top:1.5rem">Partido do prefeito eleito, de 2004 a 2024${m.prefeito_reeleito_2024 ? "; o de 2024 foi reeleito" : ""}:</p>
-        <div class="partidos-pref">${seq.map(([ano, sig], i) => `<span${i && sig !== seq[i - 1][1] ? ' class="troca"' : ""}><small>${ano}</small>${esc(sig)}</span>`).join("")}</div>
-        <p class="sub">A marca azul indica troca de sigla; renomeações (PMDB e MDB, por exemplo) não contam como troca na pergunta 6.</p>`;
+        <div class="partidos-pref">${seq.map(([ano, sig], i) => `<span${i && sig !== seq[i - 1][1] ? ' class="troca"' : ""}><small>${ano}</small>${esc(sig)}</span>`).join("")}</div>`;
     }
     if (st.q === "q3" && m.idhm != null) extra = `<p class="sub" style="margin-top:1rem">População em 2010: ${f.int(m.populacao)} habitantes.</p>`;
     const prefeito = m.nome_prefeito_2024 ? `
@@ -285,33 +284,50 @@
       <p class="sub">${NOME_UF[m.uf]} · pergunta ${CAMADAS[st.q].n}</p>
       ${prefeito}
       <dl>${linhas}</dl>
-      ${extra}
-      <div class="terr__camara" id="terr-camara"><h4>Câmara Municipal, 2024</h4><p>Carregando…</p></div>`;
+      ${extra}`;
+    const el = document.getElementById("terr-camara");
+    el.innerHTML = `<div class="camara__topo"><h4>Câmara Municipal de ${esc(nomeMun(m.nome))}</h4><span>2024</span></div><p class="camara__aviso">Carregando…</p>`;
+    el.hidden = false;
     camara(m);
   }
 
   /* a Câmara do município (cadeiras da Q5) e o custo de cada cadeira (Q1) */
   async function camara(m) {
     const el = document.getElementById("terr-camara");
+    const topo = (n) => `<div class="camara__topo"><h4>Câmara Municipal de ${esc(nomeMun(m.nome))}</h4><span>2024${n ? ` · ${f.int(n)} cadeiras` : ""}</span></div>`;
+    const vazio = (t) => (el.innerHTML = `${topo()}<p class="camara__aviso">${t}</p>`);
     try {
       const [cad, q1] = await Promise.all([arquivo(`site/cadeiras_2024_VEREADOR_${m.uf}.json`), arquivo("q1_municipio_VEREADOR.json")]);
       if (!el.isConnected || st.cod !== m.cod_ibge) return;
-      const linhas = cad.linhas.filter((l) => l[0] === m.cod_ibge);
+      const linhas = cad.linhas.filter((l) => l[0] === m.cod_ibge)
+        .map((l) => ({ id: l[2], nome: l[4], partido: l[5], votos: l[6], posicao: l[7], sozinho: !l[11] }));
       const custo = q1.linhas.find((l) => l.ano === 2024 && l.uf === m.uf && l.municipio_busca === semAcento(m.nome));
-      if (!linhas.length) { el.innerHTML = `<h4>Câmara Municipal, 2024</h4><p>Os votos de vereador deste município não foram publicados completos pelo TSE em 2024.</p>`; return; }
+      if (!linhas.length) { vazio("Os votos de vereador deste município não foram publicados completos pelo TSE em 2024."); return; }
       const por = new Map();
-      for (const l of linhas) por.set(l[5], (por.get(l[5]) ?? 0) + 1);
-      const partidos = [...por].map(([nome, cadeiras]) => ({ nome, cadeiras, cor: H.cor(nome) })).sort((a, b) => b.cadeiras - a.cadeiras || a.nome.localeCompare(b.nome));
-      el.innerHTML = `<h4>Câmara Municipal, 2024</h4>
-        <p>${partidos.map((p) => `${esc(p.nome)} ${p.cadeiras}`).join(" · ")}${custo ? `. Cada cadeira custou R$ ${nf(0).format(custo.custo_por_cadeira)} (pergunta 1).` : "."}</p>
-        <div class="hemi" id="terr-hemi"></div>
-        <a class="acao" href="#casa" id="terr-ver-casa">Ver quem ocupa cada cadeira</a>`;
-      H.desenha(document.getElementById("terr-hemi"), { partidos, legendaCentro: "cadeiras" });
+      for (const l of linhas) (por.get(l.partido) ?? por.set(l.partido, []).get(l.partido)).push(l);
+      const partidos = [...por].map(([nome, membros]) => ({ nome, cadeiras: membros.length, cor: H.cor(nome), membros: membros.sort((a, b) => b.votos - a.votos) }))
+        .sort((a, b) => b.cadeiras - a.cadeiras || a.nome.localeCompare(b.nome));
+      const top = linhas.find((l) => l.posicao === 1) ?? [...linhas].sort((a, b) => b.votos - a.votos)[0];
+      const pessoa = (l, rotulo) => `<img src="fotos/${l.id}.webp" alt="" width="161" height="225" onerror="this.remove()">
+        <p><span>${rotulo}</span><b>${esc(titulo(l.nome))}</b><small>${esc(l.partido)} · ${f.int(l.votos)} votos${l.sozinho ? " · atingiu o quociente sozinho" : ""}</small></p>`;
+      el.innerHTML = `
+        ${topo(linhas.length)}
+        <div class="hemi camara__hemi" id="terr-hemi"></div>
+        <div class="camara__lado">
+          <div class="camara__pessoa" id="terr-vereador">${pessoa(top, "Maior votação")}</div>
+          <ul class="camara__legenda">${partidos.map((p) => `<li><i style="background:${p.cor}"></i>${esc(p.nome)}<b>${p.cadeiras}</b></li>`).join("")}</ul>
+          ${custo ? `<p class="camara__custo"><b>R$ ${nf(0).format(custo.custo_por_cadeira)}</b>por cadeira, somando o gasto dos ${f.int(custo.candidatos)} candidatos (pergunta 1)</p>` : ""}
+          <button type="button" class="camara__botao" id="terr-ver-casa">Abrir no hemiciclo da pergunta 5</button>
+        </div>`;
+      const hemi = document.getElementById("terr-hemi");
+      hemi.addEventListener("assento", (e) => { document.getElementById("terr-vereador").innerHTML = pessoa(e.detail.membro, "Nesta cadeira"); });
+      H.desenha(hemi, { partidos, legendaCentro: "cadeiras" });
       document.getElementById("terr-ver-casa").addEventListener("click", () => {
         document.dispatchEvent(new CustomEvent("abre-casa", { detail: { uf: m.uf, cod: m.cod_ibge } }));
+        document.getElementById("casa").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       });
     } catch {
-      el.innerHTML = `<h4>Câmara Municipal, 2024</h4><p>Não foi possível carregar a Câmara.</p>`;
+      vazio("Não foi possível carregar a Câmara.");
     }
   }
 
@@ -351,6 +367,7 @@
     await desenha();
     if (meu !== pedido) return;
     const med = medidaDe(st.q, st.medida);
+    if (!st.cod) document.getElementById("terr-camara").hidden = true;
     if (st.cod) await painelMun(med);
     else if (st.uf) await painelUf(med);
     else await painelGeral(med);

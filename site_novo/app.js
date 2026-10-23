@@ -151,6 +151,20 @@ const cidade = (() => {
 
   /* fotos das candidaturas de 2018 em diante (vw_site_candidatura_foto): id_pessoa -> [[ano, id_candidatura, cargo]] */
   const fotosPessoa = arquivo("site/fotos_pessoa.json").catch(() => ({}));
+  /* escolaridade e dinheiro de cada candidatura (vw_site_carreira), em 32 pedaços por id_pessoa % 32 */
+  const extras = (id) => arquivo(`site/carreira/${id % 32}.json`).then((f) => (f.pessoas[id] ?? []).map((l) => Object.fromEntries(f.colunas.map((c, i) => [c, l[i]])))).catch(() => []);
+  const sentenca = (t) => t.charAt(0) + t.slice(1).toLowerCase();
+  const grau = (g) => (g ? sentenca(g.replace(/^ENSINO /, "")) : "Não informado");
+  const ocupacao = (o) => (o ? sentenca(o) : "Não informada");
+  const reais = (v) => (v >= 1e6 ? `R$ ${fmt.dec(v / 1e6)} mi` : v >= 1e4 ? `R$ ${fmt.int.format(Math.round(v / 1e3))} mil` : fmt.brl.format(v));
+  const centavos = (v) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const porVoto = (e) => (e?.votos > 0 && e.gasto != null ? e.gasto / e.votos : null);
+  const variacao = (de, para) => {
+    if (!(de > 0)) return "";
+    const r = para / de;
+    return r >= 1.95 ? `${fmt.dec(r)} vezes` : `${r >= 1 ? "+" : "−"}${fmt.int.format(Math.round(Math.abs(r - 1) * 100))}%`;
+  };
+  const quadro = (rot, val, sub, extra = "") => `<div class="ficha-c"><span>${rot}</span><b>${val}</b>${sub ? `<small>${sub}</small>` : ""}${extra}</div>`;
   const foto = (idc, alt, classe) => `<img class="${classe}" src="fotos/${idc}.webp" alt="${alt}" width="161" height="225" loading="lazy" onerror="this.remove()">`;
 
   async function abre(id, nomeIndice) {
@@ -158,23 +172,73 @@ const cidade = (() => {
     try {
       const fp = (await fotosPessoa)[String(id)] ?? [];
       const porAno = new Map(fp.map(([ano, idc]) => [ano, idc]));
-      const d = await api(`/api/q10/pessoa/${id}`);
+      const [d, ex] = await Promise.all([api(`/api/q10/pessoa/${id}`), extras(Number(id))]);
       const c = d.carreira;
+      const chave = (x) => `${x.ano}|${x.cargo}|${semAcento(x.local)}`;
+      const porCand = new Map(ex.map((e) => [chave(e), e]));
+      const extra = (x) => porCand.get(chave(x)) ?? ex.find((e) => e.ano === x.ano && e.cargo === x.cargo);
+      const ex2 = c.map(extra);
+      const comConta = ex2.filter((e) => e && e.gasto !== null);
+      const gastoTotal = comConta.reduce((t, e) => t + e.gasto, 0);
       const vit = c.filter((x) => x.resultado === "VITÓRIA").length;
       const partidos = new Set(c.map((x) => x.partido)).size;
       const nome = titulo(nomeIndice ?? d.nomes[d.nomes.length - 1]);
       const ultima = fp[fp.length - 1];
+
+      /* quadros do topo: escolaridade, gasto, patrimônio (com a evolução) e custo por voto */
+      const graus = ex2.map((e, i) => ({ ano: c[i].ano, g: e?.grau_instrucao })).filter((g) => g.g);
+      const pat = ex2.map((e, i) => ({ ano: c[i].ano, v: e?.patrimonio })).filter((p) => p.v != null);
+      const prop = ex2.map((e, i) => ({ e, x: c[i] })).filter(({ e }) => porVoto(e) != null);
+      const quadros = [];
+      if (graus.length) {
+        const g0 = graus[0], g1 = graus[graus.length - 1];
+        quadros.push(quadro("Escolaridade", grau(g1.g), g0.g !== g1.g ? `Declarava ${grau(g0.g).toLowerCase()} em ${g0.ano}` : (graus.length === 1 ? `Declarada em ${g1.ano}` : `A mesma nas ${graus.length} candidaturas`)));
+      }
+      if (comConta.length) quadros.push(quadro("Gasto em campanhas", reais(gastoTotal), `${comConta.length === 1 ? "Uma campanha" : `${comConta.length} campanhas`} de 2018 em diante`));
+      if (pat.length) {
+        const p0 = pat[0], p1 = pat[pat.length - 1], max = Math.max(...pat.map((p) => p.v));
+        const v = pat.length > 1 ? variacao(p0.v, p1.v) : "";
+        quadros.push(quadro("Patrimônio declarado", p1.v > 0 ? reais(p1.v) : "Nada declarado",
+          pat.length > 1 ? (p0.v > 0 ? `${reais(p0.v)} em ${p0.ano}${v ? `; ${v.includes("vezes") ? `${v} mais` : v}` : ""}` : `Nada declarado em ${p0.ano}`) : `Em ${p1.ano}`,
+          pat.length > 1 ? `<div class="mini" aria-hidden="true">${pat.map((p) => `<span title="${p.ano}: ${reais(p.v)}"><i style="height:${max ? Math.max(3, (p.v / max) * 100) : 0}%"></i><small>${p.ano}</small></span>`).join("")}</div>` : ""));
+      }
+      if (prop.length) {
+        const u = prop[prop.length - 1];
+        quadros.push(quadro("Custo por voto", centavos(porVoto(u.e)), `${fmt.int.format(u.e.votos)} votos para ${titulo(u.x.cargo).toLowerCase()} em ${u.x.ano}`));
+      }
+
+      /* segunda linha de cada candidatura */
+      let antPat = null;
+      const fichas = ex2.map((e, i) => {
+        const ant = i ? ex2[i - 1] : null;
+        const itens = [
+          ["Escolaridade", grau(e?.grau_instrucao), "forte", ant && ant.grau_instrucao === e?.grau_instrucao],
+          ["Ocupação", ocupacao(e?.ocupacao), "", ant && ant.ocupacao === e?.ocupacao],
+        ];
+        if (e?.gasto != null) {
+          itens.push(["Gasto", reais(e.gasto), "forte"]);
+          const v = antPat > 0 && e.patrimonio != null ? variacao(antPat, e.patrimonio) : "";
+          itens.push(["Patrimônio", `${e.patrimonio > 0 ? reais(e.patrimonio) : "nada declarado"}${v ? ` <small title="Em relação ao patrimônio declarado na candidatura anterior">${v.includes("vezes") ? `×${v.replace(" vezes", "")}` : v}</small>` : ""}`]);
+          if (e.patrimonio != null) antPat = e.patrimonio;
+          if (porVoto(e) != null) itens.push(["Votos", fmt.int.format(e.votos)], ["Custo por voto", centavos(porVoto(e))]);
+        }
+        return `<dl class="band__ficha">${itens.map(([t, v, cls, igual]) => `<div class="${cls}${igual ? " igual" : ""}"><dt>${t}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
+      });
+
       alvo.innerHTML = `
         <div class="career__topo">${ultima ? foto(ultima[1], `Foto de ${nome} no registro da candidatura de ${ultima[0]}`, "career__foto") : ""}<div>
         <p class="career__name">${nome}</p>
-        <p class="career__sum nums">${c.length} candidaturas de ${c[0].ano} a ${c[c.length - 1].ano}, ${vit} ${vit === 1 ? "vitória" : "vitórias"}, ${partidos} ${partidos === 1 ? "partido" : "partidos"}.${fp.length ? " As fotos são as do registro de cada candidatura, de 2018 em diante." : ""}</p></div></div>
+        <p class="career__sum nums">${c.length === 1 ? `Uma candidatura, em ${c[0].ano}` : `${c.length} candidaturas de ${c[0].ano} a ${c[c.length - 1].ano}`}, ${vit} ${vit === 1 ? "vitória" : "vitórias"}, ${partidos} ${partidos === 1 ? "partido" : "partidos"}.</p></div></div>
+        ${quadros.length ? `<div class="career__quadros nums">${quadros.join("")}</div>` : ""}
         <ol class="bands">${c.map((x, i) => `
           <li class="band${x.resultado === "VITÓRIA" ? " band--won" : ""}" style="--i:${i}">
             <span class="band__year">${x.ano}</span>
             <span class="band__foto">${porAno.has(x.ano) ? foto(porAno.get(x.ano), `Foto de ${nome} em ${x.ano}`, "") : ""}</span>
             <span class="band__what"><b>${titulo(x.cargo)}, ${local(x.local)}</b><span>${x.partido}${x.evento ? `. ${x.evento.charAt(0) + x.evento.slice(1).toLowerCase()}` : ""}${x.troca_partido ? `. ${x.troca_partido}` : ""}</span></span>
             <span class="band__res"><b>${x.resultado === "VITÓRIA" ? "Eleito" : titulo(x.detalhe_resultado || x.resultado)}</b></span>
-          </li>`).join("")}</ol>`;
+            ${fichas[i]}
+          </li>`).join("")}</ol>
+        <p class="career__nota">Gasto, patrimônio e votos só existem de 2018 em diante: o banco não tem a prestação de contas nem os bens declarados das eleições anteriores. Para prefeito, governador e senador, os votos são os do 1º turno. Em cinza, o que repete a candidatura anterior.</p>`;
     } catch {
       alvo.innerHTML = `<p class="career__name">Carreira indisponível</p><p class="career__sum">Esta pessoa não está entre as gravadas na versão estática.</p>`;
     }

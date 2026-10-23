@@ -18,7 +18,7 @@ TSE / IBGE / IPEA          Python                      PostgreSQL               
 | Crawler | `crawler/` | Baixa dos sites oficiais só os arquivos necessários (6 GB de download, ~33 GB em disco). [Detalhes](docs/CRAWLER.md) |
 | Carga e banco | `dados/questoes/carga_v2/` | Limpa os dados, resolve a identidade das pessoas, gera um CSV por tabela, importa no PostgreSQL e cria as views |
 | Site de consulta | `site_eleicoes/` | Os dados das perguntas, com filtros (React + API em Node, lê o banco). [Detalhes](site_eleicoes/README.md) |
-| Site de apresentação | `site_novo/` | O relatório visual: as perguntas como capítulos, o hemiciclo com cada eleito, o mapa por município, as fotos dos candidatos e a página de consultas com o SQL das views. Estático: abre sem banco. [Detalhes](site_novo/README.md) |
+| Site de apresentação (Confirma) | `site_novo/` | O relatório visual: as perguntas como capítulos, o hemiciclo com cada eleito, o mapa por município, as fotos dos candidatos e a página de consultas com o SQL das views. Estático: abre sem banco. [Detalhes](site_novo/README.md) |
 
 **Regra do projeto:** o site e o app só leem **views** do banco (`views_*.sql`). Toda regra de negócio fica nas views,
 não no front. Mudou um critério? Mude a view.

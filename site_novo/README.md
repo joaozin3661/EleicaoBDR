@@ -1,4 +1,6 @@
-# Eleições 2002–2024 (site de apresentação)
+# Confirma (site de apresentação)
+
+Quanto custa uma cadeira: eleições de 2002 a 2024 em seis estados.
 
 Site estático, sem build. Lê as respostas gravadas em `dados/` (cópia de `site_eleicoes/estatico/dados`).
 

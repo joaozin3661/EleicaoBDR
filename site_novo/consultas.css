@@ -175,10 +175,19 @@ td.traco { color: var(--faint); }
 .sugestoes button[aria-selected="true"], .sugestoes button:hover { background: var(--raised); }
 .sugestoes small { color: var(--muted); }
 .carreira { display: grid; gap: 4px; }
-.etapa { display: grid; grid-template-columns: 3.5rem 2.4rem minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; min-height: 56px; padding: 8px 12px; border-radius: 6px; background: var(--raised); }
+.etapa { display: grid; grid-template-columns: 3.5rem 2.4rem minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; min-height: 56px; padding: 10px 12px; border-radius: 6px; background: var(--raised); }
 .etapa__ano { font-size: 17px; font-variant-numeric: tabular-nums lining-nums; }
 .etapa__o b { display: block; font-weight: 600; font-size: 15px; line-height: 1.25; }
 .etapa__o span { display: block; font-size: 13px; color: var(--muted); }
+.etapa .selo { justify-self: end; }
+.etapa__ficha { grid-column: 3 / -1; display: grid; grid-template-columns: 10.5rem 9.5rem 7rem 9.5rem 4.5rem 5.5rem; gap: 6px 14px; align-items: start; margin: 0; }
+.etapa__ficha dd { margin: 0; }
+.etapa__ficha dt { font-size: 12px; color: var(--muted); }
+.etapa__ficha dd { font-size: 13px; font-variant-numeric: tabular-nums lining-nums; }
+.etapa__ficha .forte dd { font-size: 15px; font-weight: 600; }
+.etapa__ficha .igual dd { color: var(--muted); }
+.etapa__ficha small { font-size: 12px; font-weight: 400; }
+.kpi--texto b { font-size: 18px; line-height: 1.25; }
 .selo { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; background: var(--active); white-space: nowrap; }
 .selo.ganhou { background: var(--accent); color: #fff; }
 

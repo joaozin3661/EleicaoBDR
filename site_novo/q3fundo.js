@@ -1,7 +1,7 @@
 /* Q3 a fundo: desenvolvimento do município (IDHM e PIB per capita de 2010) contra o comportamento do eleitor
    na eleição para prefeito de 2008 e 2012.
    Pontos: vw_site_municipio (dados/site/municipios.json). Correlações: mv_q3_correlacao, geral e por estado.
-   Partidos por faixa: mv_q3_partidos. Faixas nos dois anos: mv_q3_grupos. As votações anuladas pelo TSE ficam
+   Partidos por faixa: mv_q3_partidos. As votações anuladas pelo TSE ficam
    fora das medidas de voto, como na pergunta 3; a razão eleitores/habitantes usa todos os municípios. */
 
 (async () => {
@@ -187,7 +187,7 @@
     return rs[0].r;
   }
 
-  /* ----- partidos por faixa, 2008 × 2012, mais eleitores que moradores ----- */
+  /* ----- partidos por faixa, mais eleitores que moradores ----- */
   async function paineis(todas) {
     const nomes = FAIXAS[st.indice];
     const grupos = (todas?.grupos ?? []).filter((g) => g.grupo_ordem > 0 && g.municipios > 0).sort((a, b) => a.grupo_ordem - b.grupo_ordem);
@@ -201,21 +201,6 @@
       const usados = [...new Set(grupos.flatMap((g) => (todas.partidos ?? []).filter((p) => p.grupo_ordem === g.grupo_ordem).sort((a, b) => a.posicao - b.posicao).slice(0, 5).map((p) => p.partido)))];
       return `<p class="fundo__chave" style="margin-top:1rem;font-size:var(--step-small)">${usados.map((p) => `<span><i style="background:${H.cor(p)};border-radius:2px"></i>${esc(p)}</span>`).join("")}<span><i style="background:#b4bac4;border-radius:2px"></i>outros</span></p>`;
     })()}`;
-
-    /* de 2008 para 2012, por grupo */
-    const md = MEDIDAS[st.medida];
-    try {
-      const [g08, g12] = await Promise.all([2008, 2012].map((ano) => resposta(`/api/q3?${qs({ ano, dim: st.indice, cargo: "PREFEITO", uf: "TODAS" })}`).then((r) => r.dados.grupos)));
-      const linhas = g08.filter((g) => g.grupo_ordem > 0).sort((a, b) => a.grupo_ordem - b.grupo_ordem).map((a) => ({ g: a.grupo_ordem, a: a[md.view], b: g12.find((x) => x.grupo_ordem === a.grupo_ordem)?.[md.view] })).filter((l) => l.a != null && l.b != null);
-      const max = Math.max(...linhas.flatMap((l) => [l.a, l.b])) * 1.1;
-      document.getElementById("fundo-mudou-sub").textContent = `${md.voto ? md.eixo[0].toUpperCase() + md.eixo.slice(1) : "Eleitores aptos por 100 habitantes"} em cada grupo, somados os municípios.`;
-      document.getElementById("fundo-mudou").innerHTML = `<div class="halter">${linhas.map((l) => {
-        const xa = (l.a / max) * 100, xb = (l.b / max) * 100;
-        return `<div class="halter__linha"><span>${nomes[l.g]}</span><div class="halter__trilho"><b style="left:${Math.min(xa, xb)}%;width:${Math.abs(xb - xa)}%"></b><i class="a" style="left:${xa}%"></i><i class="b" style="left:${xb}%"></i><em style="left:${xb}%">${nf(1).format(l.b)}</em></div></div>`;
-      }).join("")}</div><p class="halter__chave"><span><i style="display:inline-block;width:.75rem;height:.75rem;border-radius:50%;border:2px solid var(--ink)"></i>2008</span><span><i style="display:inline-block;width:.75rem;height:.75rem;border-radius:50%;background:var(--accent)"></i>2012 (valor escrito)</span></p>`;
-    } catch {
-      document.getElementById("fundo-mudou").innerHTML = "";
-    }
 
     /* mais eleitores que moradores */
     const acima = MUN.filter((m) => m[`eleitores_pop_${st.ano}`] > 100).sort((a, b) => b[`eleitores_pop_${st.ano}`] - a[`eleitores_pop_${st.ano}`]);
