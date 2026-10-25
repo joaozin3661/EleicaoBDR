@@ -47,3 +47,4 @@ dados/_dump/
 # site_novo: capturas de tela e páginas de teste da inspeção visual (fica só a nota de design)
 site_novo/.taste-skill/*
 !site_novo/.taste-skill/notas.md
+site_novo/fotos/
