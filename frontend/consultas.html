@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Confirma · Eleições no Brasil</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta name="description" content="As dez perguntas do banco de eleições examinadas com views SQL, com filtros, gráficos e a consulta executada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/consultas.css">
+<link rel="stylesheet" href="css/vies.css">
+<link rel="stylesheet" href="css/tema.css">
+</head>
+<body>
+
+<div class="dateline wrap">
+  <p class="dateline__ed nums"><a class="dateline__marca" href="index.html">Confirma</a><span>Eleições no Brasil</span><span>2002 a 2026</span><span>UFPI, Teresina - PI</span></p>
+  <nav class="dateline__nav" aria-label="Páginas">
+    <a href="index.html" data-volta>História</a>
+    <a href="consultas.html" aria-current="page">Consultas</a>
+    <a href="sobre.html">Sobre</a>
+  </nav>
+</div>
+
+<div class="shell">
+  <aside class="side" aria-label="Perguntas">
+    <nav class="menu" id="menu">
+      <p class="grupo">Dinheiro</p>
+      <a href="#q1" data-q="q1"><b>1</b><span>Quanto custa uma cadeira</span></a>
+      <a href="#q2" data-q="q2"><b>2</b><span>Patrimônio e sucesso</span></a>
+      <a href="#q8" data-q="q8"><b>8</b><span>Recursos públicos e privados</span></a>
+      <a href="#q9" data-q="q9"><b>9</b><span>Onde vai a propaganda</span></a>
+      <p class="grupo">Voto e território</p>
+      <a href="#q5" data-q="q5"><b>5</b><span>Eleitos pela legenda</span></a>
+      <a href="#q3" data-q="q3"><b>3</b><span>Índices do município</span></a>
+      <a href="#q4" data-q="q4"><b>4</b><span>Escolaridade</span></a>
+      <a href="#q6" data-q="q6"><b>6</b><span>Idade e alternância</span></a>
+      <a href="#q7" data-q="q7"><b>7</b><span>Viés político</span></a>
+      <p class="grupo">Pessoas</p>
+      <a href="#q10" data-q="q10"><b>10</b><span>Carreira de um político</span></a>
+      <p class="grupo">O banco</p>
+      <a href="#banco" data-q="banco"><b>a</b><span>O que está no banco</span></a>
+      <a href="#qualidade" data-q="qualidade"><b>b</b><span>Identidade dos políticos</span></a>
+    </nav>
+    <p class="side__dica">As teclas de 1 a 9, e o 0 para a décima, levam direto a cada pergunta.</p>
+  </aside>
+
+  <header class="topo-fone">
+    <a class="volta-q" data-volta href="index.html">← História</a>
+    <label class="sr-only" for="menu-fone">Pergunta</label>
+    <select id="menu-fone"></select>
+  </header>
+
+  <main class="canvas" id="canvas">
+    <div class="titulo">
+      <div class="titulo__linha"><p class="crumb" id="crumb">Pergunta 1</p><a class="volta-q volta-q--botao" data-volta href="index.html"><i aria-hidden="true">←</i>Voltar à história</a></div>
+      <h1 id="titulo">Quanto custa uma cadeira</h1>
+      <p class="achado" id="achado" aria-live="polite"></p>
+    </div>
+
+    <form class="filtros" id="filtros" aria-label="Filtros"></form>
+
+    <div id="corpo" class="corpo" aria-live="polite"></div>
+
+    <section class="sql" aria-labelledby="sql-t">
+      <div class="sql__topo">
+        <div>
+          <h2 id="sql-t">Consulta executada</h2>
+          <p class="muted">O SQL que rodou nas views do banco eleicoes para montar esta tela.</p>
+        </div>
+        <div class="sql__acoes">
+          <button type="button" class="botao-sec" id="copiar" hidden>Copiar SQL</button>
+          <button type="button" class="botao-sec" id="ver-sql" aria-expanded="false" aria-controls="sql-caixa">Ver SQL</button>
+        </div>
+      </div>
+      <pre id="sql-caixa" hidden><code id="sql"></code></pre>
+    </section>
+  </main>
+</div>
+
+<script src="js/ufs.js"></script>
+<script src="js/chave.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/hemiciclo.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/vies.js"></script>
+<script src="js/relevo.js"></script>
+<script src="js/trilha.js"></script>
+<script src="js/consultas.js"></script>
+</body>
+</html>

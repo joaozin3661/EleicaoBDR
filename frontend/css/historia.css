@@ -1,0 +1,114 @@
+/* A história em capítulos (index.html).
+   Cada capítulo tem o mesmo molde: abertura com um número, o gráfico com passos e o fecho com o botão.
+   Carrega depois de styles.css e narrativa.css. */
+
+/* ---------- capítulo ---------- */
+.cap { position: relative; }
+.cap__chapeu { max-width: none; font-size: 0.8125rem; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+/* abertura: chapéu e título em cima, o número embaixo, do tamanho de uma manchete */
+.cap__abre { min-height: 100svh; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 1fr auto; column-gap: var(--gutter); padding-block: 2.5rem 3.5rem; border-top: 1px solid var(--ink); }
+.cap__cabeca { grid-column: 1 / -1; }
+.cap__titulo { margin-top: 0.9rem; font-size: var(--step-head); }
+.cap__num { grid-column: 1 / -1; align-self: end; max-width: none; font-size: clamp(4.5rem, 1rem + 15vw, 19rem); line-height: 0.86; letter-spacing: -0.045em; white-space: nowrap; }
+.cap__leg { grid-column: 1 / 8; margin-top: 2rem; max-width: 34ch; font-size: var(--step-lead); line-height: 1.25; }
+.cap__abre--breve .cap__leg { grid-column: 1 / 7; }
+.cap__abre--breve .cap__acao { grid-column: 8 / 13; align-self: end; }
+
+/* o miolo: só o gráfico e os passos; o primeiro passo ocupa a tela inteira, com o gráfico já no meio */
+.cap__miolo.custo, .cap__miolo.esc, .cap__miolo.casa, .cap__miolo.escola, .cap__miolo.fila, .cap__miolo.cem, .cap__miolo.trinta, .cap__miolo.idh { padding-block: 0; }
+.cap__miolo .scrolly, .cap__miolo.casa .scrolly { margin-top: 0; }
+.graf__titulo { max-width: none; font-size: var(--step-small); color: var(--muted); margin-bottom: 1rem; }
+@media (min-width: 48rem) {
+  .cap__miolo .scrolly__passos .passo:first-child { min-height: 100svh; }
+  .cap__miolo .desenhe { margin-top: 6rem; min-height: calc(100svh - 56px); align-content: start; }
+  .cap__miolo .desenhe--claro { margin-top: 0; padding-top: 5rem; }
+}
+
+/* fecho: a resposta numa frase e o botão para as consultas */
+.cap__fecha { min-height: 100svh; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 1fr auto; column-gap: var(--gutter); padding-block: 2.5rem 3.5rem; }
+.cap__fecha .cap__chapeu { grid-column: 1 / -1; }
+.cap__resposta { grid-column: 1 / 11; align-self: center; max-width: 30ch; font-size: clamp(1.75rem, 1rem + 2.4vw, 3.5rem); line-height: 1.12; letter-spacing: -0.02em; }
+.cap__resposta b { font-weight: 400; color: var(--accent); }
+.cap__fecha .cap__acao { grid-column: 1 / 8; }
+
+.cap__acao { display: grid; row-gap: 0.9rem; justify-items: start; }
+.cap__botao { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1.5rem; align-items: center; padding: 1.35rem 1.6rem; background: var(--ink); color: var(--bg); text-decoration: none; transition: background-color var(--t-hover) var(--ease-out), transform var(--t-press) var(--ease-out); }
+.cap__botao b { grid-column: 1; font-weight: 400; font-size: var(--step-lead); line-height: 1.15; letter-spacing: -0.01em; }
+.cap__botao span { grid-column: 1; margin-top: 0.3rem; font-size: var(--step-body); color: #cdc7bb; }
+.cap__botao i { grid-column: 2; grid-row: 1 / 3; font-style: normal; font-size: var(--step-head); line-height: 1; transition: transform var(--t-ui) var(--ease-out); }
+.cap__botao:hover, .cap__botao:focus-visible { background: var(--accent); }
+.cap__botao:hover i, .cap__botao:focus-visible i { transform: translateX(0.4rem); }
+.cap__botao:active { transform: scale(0.99); }
+.cap__sql { font-size: var(--step-small); color: var(--muted); }
+
+/* capítulo em fundo de tinta (o hemiciclo) */
+.cap--escuro { background: var(--ink); color: var(--bg); }
+.cap--escuro .cap__abre { border-top-color: var(--ink); }
+.cap--escuro .cap__chapeu, .cap--escuro .cap__sql { color: #a39d91; }
+.cap--escuro .cap__resposta b { color: var(--cobalt-soft); }
+.cap--escuro .cap__botao { background: var(--bg); color: var(--ink); }
+.cap--escuro .cap__botao span { color: var(--muted); }
+.cap--escuro .cap__botao:hover, .cap--escuro .cap__botao:focus-visible { background: var(--accent); color: var(--accent-ink); }
+.cap--escuro .cap__botao:hover span, .cap--escuro .cap__botao:focus-visible span { color: #dbe4f0; }
+
+/* a sétima pergunta: espaço reservado */
+
+/* âncoras vindas de outra página caem no topo da tela */
+.cap:target, .cap__fecha:target { scroll-margin-top: 0; }
+
+/* ---------- trilho das perguntas: os números na borda direita ---------- */
+.trilho { position: fixed; right: 0.3rem; top: 50%; transform: translateY(-50%); z-index: 60; display: flex; flex-direction: column; gap: 3px; }
+.trilho a { position: relative; width: 1.6rem; height: 1.6rem; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--surface-2); color: var(--muted); font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums lining-nums; text-decoration: none; transition: background-color var(--t-hover) var(--ease-out), color var(--t-hover) var(--ease-out), border-color var(--t-hover) var(--ease-out); }
+.trilho a:hover, .trilho a:focus-visible { border-color: var(--ink); color: var(--ink); }
+.trilho a[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.trilho a.pendente { border-style: dashed; }
+.trilho a span { position: absolute; right: calc(100% + 0.4rem); top: 50%; transform: translateY(-50%); padding: 0.3rem 0.55rem; background: var(--ink); color: var(--bg); font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity var(--t-hover) var(--ease-out); }
+.trilho a:hover span, .trilho a:focus-visible span { opacity: 1; }
+@media (max-width: 47.99rem) { .trilho { display: none; } }
+
+/* leva à mesma pergunta nas consultas: fica em pé, no alto do trilho (o trilho.js o leva para lá), discreto como os números */
+.volta-hist { position: fixed; right: 0.3rem; top: 1rem; z-index: 60; }
+.trilho .volta-hist { position: static; width: 1.6rem; height: auto; margin-bottom: 0.5rem; padding: 0.7rem 0; writing-mode: vertical-rl; background: var(--bg); border-color: var(--surface-2); color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.trilho .volta-hist:hover, .trilho .volta-hist:focus-visible { background: var(--bg); border-color: var(--ink); color: var(--ink); }
+
+@media (max-width: 47.99rem) {
+  .cap__abre, .cap__fecha { padding-block: 2rem; }
+  .cap__leg, .cap__abre--breve .cap__leg, .cap__abre--breve .cap__acao, .cap__resposta, .cap__fecha .cap__acao { grid-column: 1 / -1; }
+  .cap__abre--breve .cap__acao { margin-top: 2rem; }
+  .cap__num { white-space: normal; }
+}
+
+/* ---------- capa: a dica do teclado ---------- */
+.hero__dica { margin-top: 1rem; font-size: var(--step-small) !important; color: var(--muted); }
+
+/* ---------- os dez achados, no fim da história ---------- */
+.cap__miolo.trilha { padding-block: 0; }
+.respostas { min-height: 100svh; padding-block: 2.5rem 3rem; align-content: center; border-top: 1px solid var(--ink); display: grid; row-gap: 0.75rem; }
+.respostas h2 { font-size: var(--step-head); }
+.respostas__lista { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--gutter); }
+.respostas__lista li { border-top: 1px solid var(--surface-2); }
+.respostas__lista a { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); column-gap: 0.75rem; row-gap: 0.6rem; padding: 1.75rem 1rem 2.25rem 0; color: inherit; text-decoration: none; transition: background-color var(--t-hover) var(--ease-out); }
+.respostas__lista a:hover, .respostas__lista a:focus-visible { background: var(--surface); }
+.respostas__n { grid-row: 1 / 3; font-size: 3.4rem; line-height: 0.9; color: var(--accent); }
+.respostas__lista b { font-weight: 400; font-size: var(--step-lead); line-height: 1.15; }
+.respostas__r { font-size: var(--step-body); line-height: 1.4; color: var(--muted); }
+.respostas__r b { font-size: inherit; font-weight: 600; color: var(--ink); }
+@media (max-width: 64rem) { .respostas__lista { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- método numa tela só ---------- */
+@media (min-width: 48rem) {
+  /* título à esquerda, texto à direita; o desenho na largura toda, com cada parte em cima da sua coluna */
+  #metodo { min-height: 100svh; padding-block: 3rem; align-content: center; row-gap: 0; }
+  #metodo .many__text { display: contents; }
+  #metodo .many__text h2 { grid-column: 1 / 7; }
+  #metodo .many__text p { grid-column: 7 / 13; align-self: end; margin-top: 0; max-width: 52ch; }
+  #metodo .many__diagram { margin-top: 2.5rem; }
+  #metodo .many__diagram svg { max-height: none; }
+  #metodo .many__steps { margin-top: 1rem; }
+}
+.many__num { font-size: var(--step-head); line-height: 1; letter-spacing: -0.02em; color: var(--accent); margin-bottom: 0.75rem; }
+.many__num span { font-size: var(--step-body); letter-spacing: 0; color: var(--muted); }
+
+/* pergunta 7: o mapa do viés no scroll */
+.vies__mapa svg { max-height: min(62svh, 34rem); }

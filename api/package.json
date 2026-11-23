@@ -1,0 +1,25 @@
+{
+  "name": "eleicoes-bdr-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx servidor.ts",
+    "dev": "tsx watch servidor.ts",
+    "grava": "tsx exportacao/grava.ts",
+    "fotos": "python exportacao/exporta_fotos.py && cd exportacao/miniaturas && npm install && node gera.js",
+    "publica": "python exportacao/publicar.py",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

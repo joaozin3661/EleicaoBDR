@@ -1,0 +1,59 @@
+/* Viés político (pergunta 7): mapa, legenda, barras divergentes e régua dos partidos (js/vies.js).
+   Usado pela história e pelas consultas; as cores dos dados vêm do JS, aqui só a forma. */
+.vies-mapa svg { display: block; width: 100%; height: auto; max-height: 34rem; }
+.vies-area { stroke: #f3f0e8; stroke-width: 1; vector-effect: non-scaling-stroke; transition: fill 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms; }
+.vies-area.clica { cursor: pointer; }
+.vies-area:hover { stroke: #1b1a17; stroke-width: 1.5; }
+.vies-area.destaque { stroke: #1b1a17; stroke-width: 2; }
+.vies-rot { font: 700 19px/1 "Archivo", Arial, sans-serif; font-stretch: 85%; text-anchor: middle; dominant-baseline: middle; fill: #1b1a17; paint-order: stroke; stroke: rgba(243, 240, 232, 0.85); stroke-width: 3px; pointer-events: none; }
+
+.vies-leg { display: flex; flex-wrap: wrap; align-items: start; gap: 6px 18px; margin-top: 12px; font-size: 13px; color: #5c574d; }
+.vies-leg__faixa { display: flex; }
+.vies-leg__faixa > span { display: grid; justify-items: center; gap: 16px; width: 6.4rem; }
+.vies-leg__faixa i { position: relative; width: 100%; height: 10px; }
+.vies-leg__faixa i b { position: absolute; left: 0; top: 12px; transform: translateX(-50%); font-weight: 400; font-style: normal; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.vies-leg__faixa em { font-style: normal; font-size: 12.5px; white-space: nowrap; }
+.vies-leg__sem { display: inline-flex; align-items: center; gap: 5px; }
+.vies-leg__sem i { width: 12px; height: 10px; background: #f3f0e8; outline: 1px solid #cdc6b8; }
+
+.vies-barras { display: grid; gap: 3px; }
+.vies-barra { display: grid; grid-template-columns: minmax(7rem, 1.1fr) 2fr 3.5rem; align-items: center; gap: 10px; min-height: 26px; font-size: 14px; }
+.vies-barra .rot { line-height: 1.2; overflow-wrap: anywhere; }
+.vies-barra .rot small { display: block; color: #5c574d; font-size: 12px; }
+.vies-barra.forte .rot { font-weight: 600; }
+.vies-barra .trilho { position: relative; height: 14px; background: linear-gradient(#cdc6b8, #cdc6b8) 50% 0 / 1px 100% no-repeat; }
+.vies-barra .trilho i { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; transition: left 500ms cubic-bezier(0.22, 1, 0.36, 1), width 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+.vies-barra .val { text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+
+.vies-regua { position: relative; height: calc(var(--filas, 5) * 24px + 64px); margin: 8px 14px 0; }
+.vies-regua__eixo { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; justify-content: space-between; align-items: end; border-top: 1px solid #cdc6b8; font-size: 12px; color: #5c574d; font-variant-numeric: tabular-nums; }
+.vies-regua__eixo span:nth-child(1) { transform: translateX(-50%); }
+.vies-regua__eixo span:nth-child(3) { transform: translateX(50%); }
+.vies-regua__p { position: absolute; bottom: 17px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; line-height: 1.1; white-space: nowrap; }
+.vies-regua__p b { font-weight: 600; }
+.vies-regua__p::after { content: ""; width: 1px; height: calc(6px + var(--fila) * 24px); background: #cdc6b8; }
+.vies-regua__p i { order: 3; width: 10px; height: 10px; border-radius: 50%; outline: 1px solid rgba(27, 26, 23, 0.35); }
+.vies-regua__p:hover b { text-decoration: underline; }
+
+/* ---------- o mapa em pé (js/relevo.js) ---------- */
+.relevo { position: relative; }
+.relevo svg { display: block; width: 100%; height: auto; overflow: visible; }
+.relevo .rl-plano { transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1); }
+.relevo use { transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1); }
+.relevo .rl-parede { pointer-events: none; opacity: 0; transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1), opacity 300ms; }
+.relevo.is-pe .rl-parede { opacity: 1; }
+.relevo .rl-topo { stroke: #f3f0e8; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.relevo .rl-topo.clica { cursor: pointer; }
+.relevo .rl-area.is-acesa .rl-topo { stroke: #1b1a17; stroke-width: 2; }
+.relevo .rl-rot { font: 700 16px/1 "Archivo", Arial, sans-serif; font-stretch: 85%; text-anchor: middle; dominant-baseline: middle; fill: #1b1a17; paint-order: stroke; stroke: rgba(243, 240, 232, 0.9); stroke-width: 3.5px; pointer-events: none; transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1); }
+.relevo.sem-transicao .rl-plano, .relevo.sem-transicao use, .relevo.sem-transicao .rl-rot { transition: none; }
+@media (prefers-reduced-motion: reduce) { .relevo .rl-plano, .relevo use, .relevo .rl-rot { transition: none; } }
+.rl-dica { position: absolute; z-index: 5; pointer-events: none; max-width: 17rem; padding: 7px 11px; background: #1b1a17; color: #f3f0e8; font-size: 13.5px; line-height: 1.35; white-space: nowrap; }
+.rl-dica b { display: block; font-weight: 600; font-size: 15px; }
+.vista { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-bottom: 8px; }
+.vista .seg button { min-height: 32px; padding: 0 12px; font-size: 14px; }
+.vista__nota { font-size: 13.5px; color: #5c574d; }
+.vista__volta { min-height: 32px; padding: 0 12px; font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--ink, #1b1a17); background: var(--ink, #1b1a17); color: #fff; cursor: pointer; }
+.vista__volta:hover, .vista__volta:focus-visible { background: var(--accent, #1e4a80); border-color: var(--accent, #1e4a80); }
+.vista { justify-content: flex-start; }
+.vista .vista__nota { margin-left: auto; }

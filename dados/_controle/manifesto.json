@@ -3,42 +3,42 @@
     "arquivos": [
       "ibge/censo2022/idade_mediana_envelhecimento_tabela9515.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:41",
+    "atualizado_em": "2026-11-11T16:34:36",
     "fonte": "ibge"
   },
   "ibge_censo2022_instrucao": {
     "arquivos": [
       "ibge/censo2022/nivel_instrucao_18mais_tabela10061.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:30",
+    "atualizado_em": "2026-11-11T16:34:22",
     "fonte": "ibge"
   },
   "ibge_censo2022_populacao": {
     "arquivos": [
       "ibge/populacao/censo2022_populacao_tabela4709.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:02",
+    "atualizado_em": "2026-11-11T16:34:10",
     "fonte": "ibge"
   },
   "ibge_municipios": {
     "arquivos": [
       "ibge/territorio/municipios.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:42",
+    "atualizado_em": "2026-11-11T16:34:37",
     "fonte": "ibge"
   },
   "ibge_pib": {
     "arquivos": [
       "ibge/pib/pib_municipios_tabela5938.csv"
     ],
-    "atualizado_em": "2026-09-24T10:06:59",
+    "atualizado_em": "2026-11-11T16:34:07",
     "fonte": "ibge"
   },
   "ibge_populacao_estimada": {
     "arquivos": [
       "ibge/populacao/estimativas_populacao_tabela6579.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:01",
+    "atualizado_em": "2026-11-11T16:34:09",
     "fonte": "ibge"
   },
   "ideologia_partidos": {
@@ -46,14 +46,14 @@
       "ideologia_partidos/Codebook_experts.docx",
       "ideologia_partidos/df_experts.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:44",
+    "atualizado_em": "2026-11-11T16:34:41",
     "fonte": "dataverse"
   },
   "idhm": {
     "arquivos": [
       "ipea_atlas/idhm_municipios.csv"
     ],
-    "atualizado_em": "2026-09-24T10:07:09",
+    "atualizado_em": "2026-11-11T16:34:16",
     "fonte": "ipea"
   },
   "tse:bem_candidato/bem_candidato_2018.zip": {
@@ -67,7 +67,7 @@
         "item": "bens_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:51:44",
+    "atualizado_em": "2026-11-11T15:24:01",
     "modificado": "Wed, 13 Nov 2024 16:18:46 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2018.zip"
   },
@@ -82,7 +82,7 @@
         "item": "bens_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:52:34",
+    "atualizado_em": "2026-11-11T15:24:50",
     "modificado": "Tue, 06 Jan 2026 19:51:12 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2020.zip"
   },
@@ -97,8 +97,8 @@
         "item": "bens_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:52:36",
-    "modificado": "Thu, 24 Sep 2026 06:18:34 GMT",
+    "atualizado_em": "2026-11-11T15:24:52",
+    "modificado": "Wed, 11 Nov 2026 06:18:45 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2022.zip"
   },
   "tse:bem_candidato/bem_candidato_2024.zip": {
@@ -112,9 +112,24 @@
         "item": "bens_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:52:58",
-    "modificado": "Thu, 24 Sep 2026 05:24:24 GMT",
+    "atualizado_em": "2026-11-11T15:25:09",
+    "modificado": "Wed, 11 Nov 2026 05:25:42 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2024.zip"
+  },
+  "tse:bem_candidato/bem_candidato_2026.zip": {
+    "arquivos": {
+      "bem_candidato_2026_BRASIL.csv": {
+        "caminho": "tse/bens_candidatos/2026/bem_candidato_2026_BRASIL.csv",
+        "item": "bens_candidatos"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/bens_candidatos/2026/leiame.pdf",
+        "item": "bens_candidatos"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:20:45",
+    "modificado": "Mon, 16 Nov 2026 16:08:42 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2026.zip"
   },
   "tse:consulta_cand/consulta_cand_1994.zip": {
     "arquivos": {
@@ -127,7 +142,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:52:58",
+    "atualizado_em": "2026-11-11T15:25:10",
     "modificado": "Fri, 13 Feb 2026 17:00:14 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_1994.zip"
   },
@@ -142,7 +157,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:53:18",
+    "atualizado_em": "2026-11-11T15:25:18",
     "modificado": "Fri, 13 Feb 2026 17:00:14 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_1996.zip"
   },
@@ -157,7 +172,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:53:20",
+    "atualizado_em": "2026-11-11T15:25:19",
     "modificado": "Wed, 01 Sep 2021 14:02:20 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_1998.zip"
   },
@@ -172,7 +187,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:54:25",
+    "atualizado_em": "2026-11-11T15:25:41",
     "modificado": "Mon, 22 Jan 2024 13:30:57 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2000.zip"
   },
@@ -187,7 +202,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:54:28",
+    "atualizado_em": "2026-11-11T15:25:42",
     "modificado": "Wed, 01 Sep 2021 14:02:24 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2002.zip"
   },
@@ -202,7 +217,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:55:13",
+    "atualizado_em": "2026-11-11T15:26:05",
     "modificado": "Wed, 01 Sep 2021 14:02:27 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2004.zip"
   },
@@ -217,7 +232,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:55:15",
+    "atualizado_em": "2026-11-11T15:26:06",
     "modificado": "Wed, 01 Sep 2021 14:02:27 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2006.zip"
   },
@@ -232,7 +247,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:55:40",
+    "atualizado_em": "2026-11-11T15:26:40",
     "modificado": "Wed, 01 Sep 2021 14:02:29 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2008.zip"
   },
@@ -247,7 +262,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:55:41",
+    "atualizado_em": "2026-11-11T15:26:42",
     "modificado": "Wed, 01 Sep 2021 14:02:29 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2010.zip"
   },
@@ -262,7 +277,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:56:21",
+    "atualizado_em": "2026-11-11T15:27:27",
     "modificado": "Fri, 22 Jul 2022 20:04:53 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2012.zip"
   },
@@ -277,7 +292,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:56:24",
+    "atualizado_em": "2026-11-11T15:27:28",
     "modificado": "Tue, 26 Aug 2025 16:59:56 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2014.zip"
   },
@@ -292,7 +307,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:57:19",
+    "atualizado_em": "2026-11-11T15:28:09",
     "modificado": "Thu, 11 May 2023 21:05:54 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2016.zip"
   },
@@ -307,7 +322,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T08:57:23",
+    "atualizado_em": "2026-11-11T15:28:10",
     "modificado": "Wed, 13 Nov 2024 16:20:54 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2018.zip"
   },
@@ -322,7 +337,7 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:00:11",
+    "atualizado_em": "2026-11-11T15:28:35",
     "modificado": "Tue, 06 Jan 2026 19:52:44 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2020.zip"
   },
@@ -337,8 +352,8 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:00:15",
-    "modificado": "Thu, 24 Sep 2026 06:20:12 GMT",
+    "atualizado_em": "2026-11-11T15:28:36",
+    "modificado": "Wed, 11 Nov 2026 06:20:37 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2022.zip"
   },
   "tse:consulta_cand/consulta_cand_2024.zip": {
@@ -352,9 +367,24 @@
         "item": "candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:01:53",
-    "modificado": "Thu, 24 Sep 2026 05:24:58 GMT",
+    "atualizado_em": "2026-11-11T15:28:56",
+    "modificado": "Wed, 11 Nov 2026 05:25:49 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip"
+  },
+  "tse:consulta_cand/consulta_cand_2026.zip": {
+    "arquivos": {
+      "consulta_cand_2026_BRASIL.csv": {
+        "caminho": "tse/candidatos/2026/consulta_cand_2026_BRASIL.csv",
+        "item": "candidatos"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/candidatos/2026/leiame.pdf",
+        "item": "candidatos"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:20:46",
+    "modificado": "Mon, 16 Nov 2026 16:08:42 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip"
   },
   "tse:consulta_vagas/consulta_vagas_2018.zip": {
     "arquivos": {
@@ -367,7 +397,7 @@
         "item": "vagas"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:07",
+    "atualizado_em": "2026-11-11T16:28:24",
     "modificado": "Wed, 13 Nov 2024 16:18:29 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2018.zip"
   },
@@ -382,7 +412,7 @@
         "item": "vagas"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:08",
+    "atualizado_em": "2026-11-11T16:28:24",
     "modificado": "Tue, 06 Jan 2026 19:49:44 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2020.zip"
   },
@@ -397,8 +427,8 @@
         "item": "vagas"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:08",
-    "modificado": "Thu, 24 Sep 2026 06:18:21 GMT",
+    "atualizado_em": "2026-11-11T16:28:24",
+    "modificado": "Wed, 11 Nov 2026 06:18:45 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2022.zip"
   },
   "tse:consulta_vagas/consulta_vagas_2024.zip": {
@@ -412,9 +442,54 @@
         "item": "vagas"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:09",
-    "modificado": "Thu, 24 Sep 2026 05:20:18 GMT",
+    "atualizado_em": "2026-11-11T16:28:24",
+    "modificado": "Wed, 11 Nov 2026 05:19:59 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2024.zip"
+  },
+  "tse:consulta_vagas/consulta_vagas_2026.zip": {
+    "arquivos": {
+      "consulta_vagas_2026_BRASIL.csv": {
+        "caminho": "tse/vagas/2026/consulta_vagas_2026_BRASIL.csv",
+        "item": "vagas"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/vagas/2026/leiame.pdf",
+        "item": "vagas"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:22:20",
+    "modificado": "Mon, 16 Nov 2026 16:08:43 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2026.zip"
+  },
+  "tse:detalhe_votacao_munzona/detalhe_votacao_munzona_2008.zip": {
+    "arquivos": {
+      "detalhe_votacao_munzona_2008_BRASIL.csv": {
+        "caminho": "tse/detalhe_votacao_munzona/2008/detalhe_votacao_munzona_2008_BRASIL.csv",
+        "item": "detalhe_votacao_munzona"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/detalhe_votacao_munzona/2008/leiame.pdf",
+        "item": "detalhe_votacao_munzona"
+      }
+    },
+    "atualizado_em": "2026-11-11T16:55:21",
+    "modificado": "Fri, 08 Aug 2025 16:15:26 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2008.zip"
+  },
+  "tse:detalhe_votacao_munzona/detalhe_votacao_munzona_2012.zip": {
+    "arquivos": {
+      "detalhe_votacao_munzona_2012_BRASIL.csv": {
+        "caminho": "tse/detalhe_votacao_munzona/2012/detalhe_votacao_munzona_2012_BRASIL.csv",
+        "item": "detalhe_votacao_munzona"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/detalhe_votacao_munzona/2012/leiame.pdf",
+        "item": "detalhe_votacao_munzona"
+      }
+    },
+    "atualizado_em": "2026-11-11T16:55:21",
+    "modificado": "Fri, 08 Aug 2025 16:13:27 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2012.zip"
   },
   "tse:detalhe_votacao_munzona/detalhe_votacao_munzona_2018.zip": {
     "arquivos": {
@@ -427,7 +502,7 @@
         "item": "detalhe_votacao_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:03",
+    "atualizado_em": "2026-11-11T16:28:22",
     "modificado": "Tue, 29 Jul 2025 16:29:08 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2018.zip"
   },
@@ -442,7 +517,7 @@
         "item": "detalhe_votacao_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:03",
+    "atualizado_em": "2026-11-11T16:28:22",
     "modificado": "Fri, 16 Jan 2026 21:28:23 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2020.zip"
   },
@@ -457,8 +532,8 @@
         "item": "detalhe_votacao_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:06",
-    "modificado": "Thu, 24 Sep 2026 06:37:04 GMT",
+    "atualizado_em": "2026-11-11T16:28:23",
+    "modificado": "Wed, 11 Nov 2026 06:59:33 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2022.zip"
   },
   "tse:detalhe_votacao_munzona/detalhe_votacao_munzona_2024.zip": {
@@ -472,9 +547,24 @@
         "item": "detalhe_votacao_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:07",
-    "modificado": "Wed, 23 Sep 2026 05:26:12 GMT",
+    "atualizado_em": "2026-11-11T16:28:23",
+    "modificado": "Wed, 11 Nov 2026 05:25:22 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2024.zip"
+  },
+  "tse:detalhe_votacao_munzona/detalhe_votacao_munzona_2026.zip": {
+    "arquivos": {
+      "detalhe_votacao_munzona_2026_BRASIL.csv": {
+        "caminho": "tse/detalhe_votacao_munzona/2026/detalhe_votacao_munzona_2026_BRASIL.csv",
+        "item": "detalhe_votacao_munzona"
+      },
+      "leiame.pdf": {
+        "caminho": "tse/detalhe_votacao_munzona/2026/leiame.pdf",
+        "item": "detalhe_votacao_munzona"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:22:20",
+    "modificado": "Sun, 15 Nov 2026 19:46:26 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2026.zip"
   },
   "tse:municipio_tse_ibge/municipio_tse_ibge.zip": {
     "arquivos": {
@@ -487,8 +577,8 @@
         "item": "municipio_tse_ibge"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:07",
-    "modificado": "Sun, 20 Sep 2026 12:00:32 GMT",
+    "atualizado_em": "2026-11-11T16:28:23",
+    "modificado": "Sun, 08 Nov 2026 12:00:19 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip"
   },
   "tse:perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2018.zip": {
@@ -502,7 +592,7 @@
         "item": "comparecimento_abstencao"
       }
     },
-    "atualizado_em": "2026-09-24T09:04:24",
+    "atualizado_em": "2026-11-11T15:29:58",
     "modificado": "Wed, 30 Apr 2025 14:08:42 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2018.zip"
   },
@@ -517,7 +607,7 @@
         "item": "comparecimento_abstencao"
       }
     },
-    "atualizado_em": "2026-09-24T09:05:35",
+    "atualizado_em": "2026-11-11T15:30:41",
     "modificado": "Wed, 30 Apr 2025 08:13:59 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2020.zip"
   },
@@ -532,7 +622,7 @@
         "item": "comparecimento_abstencao"
       }
     },
-    "atualizado_em": "2026-09-24T09:06:49",
+    "atualizado_em": "2026-11-11T15:31:29",
     "modificado": "Wed, 30 Apr 2025 04:01:59 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2022.zip"
   },
@@ -547,9 +637,24 @@
         "item": "comparecimento_abstencao"
       }
     },
-    "atualizado_em": "2026-09-24T09:11:49",
+    "atualizado_em": "2026-11-11T15:32:21",
     "modificado": "Wed, 30 Apr 2025 01:23:47 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2024.zip"
+  },
+  "tse:perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2026.zip": {
+    "arquivos": {
+      "leiame.pdf": {
+        "caminho": "tse/comparecimento_abstencao/2026/leiame.pdf",
+        "item": "comparecimento_abstencao"
+      },
+      "perfil_comparecimento_abstencao_2026_BRASIL.csv": {
+        "caminho": "tse/comparecimento_abstencao/2026/perfil_comparecimento_abstencao_2026_BRASIL.csv",
+        "item": "comparecimento_abstencao"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:22:19",
+    "modificado": "Fri, 13 Nov 2026 23:45:35 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2026.zip"
   },
   "tse:prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2018.zip": {
     "arquivos": {
@@ -578,8 +683,8 @@
         "item": "receitas_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:13:14",
-    "modificado": "Sun, 20 Sep 2026 06:16:47 GMT",
+    "atualizado_em": "2026-11-11T15:33:41",
+    "modificado": "Sun, 08 Nov 2026 06:20:45 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2018.zip"
   },
   "tse:prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2020.zip": {
@@ -609,8 +714,8 @@
         "item": "receitas_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:25:30",
-    "modificado": "Sat, 19 Sep 2026 18:45:40 GMT",
+    "atualizado_em": "2026-11-11T16:20:24",
+    "modificado": "Sat, 07 Nov 2026 18:44:24 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2020.zip"
   },
   "tse:prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2022.zip": {
@@ -640,8 +745,8 @@
         "item": "receitas_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:30:34",
-    "modificado": "Sun, 20 Sep 2026 18:25:18 GMT",
+    "atualizado_em": "2026-11-11T16:23:46",
+    "modificado": "Sun, 08 Nov 2026 18:25:18 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2022.zip"
   },
   "tse:prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2024.zip": {
@@ -671,8 +776,8 @@
         "item": "receitas_candidatos"
       }
     },
-    "atualizado_em": "2026-09-24T09:50:00",
-    "modificado": "Thu, 24 Sep 2026 02:49:02 GMT",
+    "atualizado_em": "2026-11-11T16:28:21",
+    "modificado": "Wed, 11 Nov 2026 02:56:50 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2024.zip"
   },
   "tse:votacao_candidato_munzona/votacao_candidato_munzona_2018.zip": {
@@ -686,7 +791,7 @@
         "item": "votacao_candidato_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:54:38",
+    "atualizado_em": "2026-11-11T16:29:39",
     "modificado": "Wed, 13 Nov 2024 16:25:44 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2018.zip"
   },
@@ -701,7 +806,7 @@
         "item": "votacao_candidato_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T09:54:58",
+    "atualizado_em": "2026-11-11T16:29:49",
     "modificado": "Tue, 06 Jan 2026 19:56:42 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2020.zip"
   },
@@ -716,8 +821,8 @@
         "item": "votacao_candidato_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:18",
-    "modificado": "Thu, 24 Sep 2026 07:18:13 GMT",
+    "atualizado_em": "2026-11-11T16:33:08",
+    "modificado": "Wed, 11 Nov 2026 07:24:49 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2022.zip"
   },
   "tse:votacao_candidato_munzona/votacao_candidato_munzona_2024.zip": {
@@ -731,9 +836,24 @@
         "item": "votacao_candidato_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:36",
-    "modificado": "Thu, 24 Sep 2026 05:29:02 GMT",
+    "atualizado_em": "2026-11-11T16:33:30",
+    "modificado": "Wed, 11 Nov 2026 05:30:39 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip"
+  },
+  "tse:votacao_candidato_munzona/votacao_candidato_munzona_2026.zip": {
+    "arquivos": {
+      "leiame.pdf": {
+        "caminho": "tse/votacao_candidato_munzona/2026/leiame.pdf",
+        "item": "votacao_candidato_munzona"
+      },
+      "votacao_candidato_munzona_2026_BRASIL.csv": {
+        "caminho": "tse/votacao_candidato_munzona/2026/votacao_candidato_munzona_2026_BRASIL.csv",
+        "item": "votacao_candidato_munzona"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:23:51",
+    "modificado": "Mon, 16 Nov 2026 16:42:02 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2026.zip"
   },
   "tse:votacao_partido_munzona/votacao_partido_munzona_2018.zip": {
     "arquivos": {
@@ -746,7 +866,7 @@
         "item": "votacao_partido_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:43",
+    "atualizado_em": "2026-11-11T16:33:47",
     "modificado": "Thu, 25 Jul 2024 01:01:27 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2018.zip"
   },
@@ -761,7 +881,7 @@
         "item": "votacao_partido_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:45",
+    "atualizado_em": "2026-11-11T16:33:49",
     "modificado": "Tue, 06 Jan 2026 19:51:09 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2020.zip"
   },
@@ -776,8 +896,8 @@
         "item": "votacao_partido_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:52",
-    "modificado": "Thu, 24 Sep 2026 06:42:09 GMT",
+    "atualizado_em": "2026-11-11T16:34:00",
+    "modificado": "Wed, 11 Nov 2026 06:24:27 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2022.zip"
   },
   "tse:votacao_partido_munzona/votacao_partido_munzona_2024.zip": {
@@ -791,8 +911,23 @@
         "item": "votacao_partido_munzona"
       }
     },
-    "atualizado_em": "2026-09-24T10:06:54",
-    "modificado": "Thu, 24 Sep 2026 05:24:30 GMT",
+    "atualizado_em": "2026-11-11T16:34:02",
+    "modificado": "Wed, 11 Nov 2026 05:25:28 GMT",
     "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2024.zip"
+  },
+  "tse:votacao_partido_munzona/votacao_partido_munzona_2026.zip": {
+    "arquivos": {
+      "leiame.pdf": {
+        "caminho": "tse/votacao_partido_munzona/2026/leiame.pdf",
+        "item": "votacao_partido_munzona"
+      },
+      "votacao_partido_munzona_2026_BRASIL.csv": {
+        "caminho": "tse/votacao_partido_munzona/2026/votacao_partido_munzona_2026_BRASIL.csv",
+        "item": "votacao_partido_munzona"
+      }
+    },
+    "atualizado_em": "2026-11-16T14:23:57",
+    "modificado": "Mon, 16 Nov 2026 15:43:28 GMT",
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2026.zip"
   }
 }

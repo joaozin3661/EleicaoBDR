@@ -1,0 +1,8 @@
+{
+  "name": "miniaturas-fotos",
+  "private": true,
+  "description": "Gera as miniaturas WebP das fotos dos candidatos para o frontend",
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}

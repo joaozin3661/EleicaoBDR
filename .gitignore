@@ -1,4 +1,4 @@
-# segredos
+# segredos (um .env só, na raiz)
 .env
 !.env.example
 
@@ -7,8 +7,19 @@ __pycache__/
 *.pyc
 node_modules/
 dist/
+.venv/
+venv/
+*.log
+npm-debug.log*
 
-# dados brutos baixados pelo crawler (reprodutíveis com `python -m crawler`)
+# editor e sistema: configurações locais de cada um (VS Code com Live Server, JetBrains) e lixo do Windows/macOS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# dados/: o que a coleta baixa e a carga gera fica fora do git (reprodutível com python -m coleta e banco/carga/)
 dados/tse/*
 !dados/tse/leiames_unificados/
 dados/ibge/
@@ -16,16 +27,10 @@ dados/ipea_atlas/
 dados/ideologia_partidos/
 dados/extrato_bancario_partido_2024/
 dados/_zips/
-
-# dados intermediários e saídas das cargas (grandes; regenerados pelos scripts)
-dados/questoes/**/prestacao*/
-dados/questoes/**/candidato20*/
-dados/questoes/**/saida/
-dados/questoes/**/saida_*/
-dados/questoes/**/consulta_cand_*/
-dados/questoes/**/vagas/
-dados/questoes/**/municipio_tse_ibge/
+dados/entradas/
+dados/saida_carga/
 *.csv
+!banco/referencia/*.csv
 *.zip
 *.7z
 *.parquet
@@ -35,16 +40,15 @@ dados/questoes/**/municipio_tse_ibge/
 *.rds
 *.pkl
 
-# site_novo: dependências e intermediários dos scripts (as miniaturas em site_novo/fotos são geradas por eles)
-site_novo/scripts/miniaturas/node_modules/
-site_novo/scripts/miniaturas/lista.json
-site_novo/scripts/cache_ibge/
-site_novo/.playwright-cli/
-
-# cópia do banco (pg_dump): vai como anexo de uma Release no GitHub, nunca no git
+# cópias do banco (pg_dump) nunca vão para o git
 dados/_dump/
+*.dump
 
-# site_novo: capturas de tela e páginas de teste da inspeção visual (fica só a nota de design)
-site_novo/.taste-skill/*
-!site_novo/.taste-skill/notas.md
-site_novo/fotos/
+# frontend: as miniaturas das fotos (geradas por npm run fotos em api/; 30 mil arquivos)
+frontend/fotos/
+.playwright-cli/
+.taste-skill/
+
+# api/exportacao: dependências e intermediários dos scripts
+api/exportacao/miniaturas/lista.json
+api/exportacao/cache_ibge/

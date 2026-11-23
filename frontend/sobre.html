@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirma · Eleições no Brasil</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta name="description" content="De onde vêm os dados do Confirma, como cada número foi calculado e o que fica de fora.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/narrativa.css">
+<link rel="stylesheet" href="css/tema.css">
+<link rel="stylesheet" href="css/sobre.css">
+</head>
+<body>
+
+<div class="dateline wrap">
+  <p class="dateline__ed nums"><a class="dateline__marca" href="index.html">Confirma</a><span>Eleições no Brasil</span><span>2002 a 2026</span><span>UFPI, Teresina - PI</span></p>
+  <nav class="dateline__nav" aria-label="Páginas">
+    <a href="index.html">História</a>
+    <a href="consultas.html">Consultas</a>
+    <a href="sobre.html" aria-current="page">Sobre</a>
+  </nav>
+</div>
+
+<header class="sobre-topo">
+  <div class="wrap">
+    <p class="sobre-chapeu">Sobre o site</p>
+    <h1>De onde vêm os números</h1>
+    <p class="sobre-lead">O Confirma junta treze eleições do Brasil inteiro, de 2002 a 2026, num banco de dados relacional, e examina dez perguntas com consultas SQL sobre ele. Esta página diz de onde vem cada dado, como cada número foi calculado e o que ficou de fora.</p>
+    <nav class="sobre-indice" aria-label="Nesta página">
+      <a href="#fontes">Fontes</a><a href="#metodo-sobre">Método</a><a href="#limites">Limitações</a><a href="#autores">Autores</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="sobre-bloco wrap" id="fontes" aria-labelledby="fontes-t">
+  <h2 id="fontes-t"><span>1</span>Fontes</h2>
+  <div class="sobre-cartoes">
+    <article>
+      <h3>TSE, Portal de Dados Abertos</h3>
+      <p>Candidaturas, resultados, bens declarados, vagas, votação por município e zona, comparecimento e perfil do eleitorado, despesas e receitas de campanha.</p>
+      <p class="sobre-data">Baixados em 11/11/2026; os arquivos de 2026 foram baixados de novo em 16/11/2026, na versão que o TSE publicou nesse dia.</p>
+      <a href="https://dadosabertos.tse.jus.br">dadosabertos.tse.jus.br</a>
+    </article>
+    <article>
+      <h3>IBGE</h3>
+      <p>Lista e contorno dos municípios, PIB municipal e população (SIDRA) e, do Censo 2022, idade mediana e instrução da população.</p>
+      <p class="sobre-data">Baixados em 11/11/2026.</p>
+      <a href="https://sidra.ibge.gov.br">sidra.ibge.gov.br</a>
+    </article>
+    <article>
+      <h3>Atlas Brasil (PNUD, Ipea, FJP)</h3>
+      <p>Índice de Desenvolvimento Humano Municipal (IDHM) de 2010, usado na pergunta 3.</p>
+      <p class="sobre-data">Baixado em 11/11/2026.</p>
+      <a href="http://www.atlasbrasil.org.br">atlasbrasil.org.br</a>
+    </article>
+    <article>
+      <h3>Pesquisa com especialistas</h3>
+      <p>Bolognesi, Codato, Ribeiro e Silva: a posição de cada partido de esquerda a direita, nas ondas de 2018 e 2022, usada no viés político (pergunta 7).</p>
+      <p class="sobre-data">Harvard Dataverse, baixado em 11/11/2026.</p>
+      <a href="https://dataverse.harvard.edu">dataverse.harvard.edu</a>
+    </article>
+  </div>
+</section>
+
+<section class="sobre-bloco sobre-bloco--papel wrap" id="metodo-sobre" aria-labelledby="metodo-sobre-t">
+  <h2 id="metodo-sobre-t"><span>2</span>Método</h2>
+  <div class="sobre-colunas">
+    <div>
+      <h3>Um banco, só views</h3>
+      <p>Os arquivos do TSE são lidos uma vez e gravados em tabelas do PostgreSQL. Toda regra de cada pergunta está em views do banco; o site só lê o resultado delas, e cada tela de Consultas mostra o SQL que rodou.</p>
+    </div>
+    <div>
+      <h3>A mesma pessoa em várias eleições</h3>
+      <p>O título de eleitor erra nos dois sentidos: a mesma pessoa aparece com títulos diferentes, e pessoas diferentes com o mesmo título. A carga agrupa pelo título, separa quem tem nome e nascimento diferentes e une quem tem o mesmo CPF ou o mesmo nome, nascimento e UF de nascimento. <a href="index.html#metodo">O quadro do método na história</a> mostra os números.</p>
+    </div>
+    <div>
+      <h3>Viés político</h3>
+      <p>O viés de um território é a média das notas dos partidos, de −100 (esquerda) a +100 (direita), pesada pelos votos válidos de cada partido, com os cargos em peso igual. As cinco faixas seguem os cortes da pesquisa: esquerda abaixo de −40, centro-esquerda até −10, centro até +10, centro-direita até +40 e direita acima disso.</p>
+    </div>
+    <div>
+      <h3>Dinheiro em valores da época</h3>
+      <p>Gastos, receitas e bens aparecem como foram declarados ao TSE, sem correção pela inflação. Gasto é a despesa contratada; dinheiro público é o Fundo Especial e o Fundo Partidário.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sobre-bloco sobre-bloco--escuro wrap" id="limites" aria-labelledby="limites-t">
+  <h2 id="limites-t"><span>3</span>Limitações</h2>
+  <ol class="sobre-limites">
+    <li><b>Amapá em 2026.</b> Os deputados federais e estaduais do Amapá vieram sem resultado e sem votos na versão do TSE de 16/11/2026. Ficam fora das perguntas 2, 4 e 5 em 2026, e o viés do Amapá em 2026 usa só presidente, governador e senador.</li>
+    <li><b>Contas de 2026.</b> A prestação de contas de 2026 ainda é parcial: despesas e receitas vão até 2024, e as perguntas 1, 8 e 9 não têm 2026.</li>
+    <li><b>Antes de 2018.</b> De 2002 a 2016 o banco tem as candidaturas e os resultados, mas não os gastos, as receitas, os bens nem os votos por município. As perguntas que dependem disso começam em 2018.</li>
+    <li><b>Presidente em 2006.</b> O TSE publica o resultado de presidente de 2006 vazio. Ele foi preenchido com os votos nominais do próprio TSE no 2º turno: Lula, 58.295.042; Geraldo Alckmin, 37.543.178.</li>
+    <li><b>Notas dos partidos.</b> A pesquisa tem ondas em 2018 e 2022. As eleições de 2024 e 2026 usam a de 2022, o que os autores desaconselham. Partidos sem nota, como o Missão em 2026, ficam fora da média.</li>
+    <li><b>Candidaturas sem resultado.</b> As indeferidas, renunciadas ou ainda em julgamento não contam como eleitas nem como não eleitas.</li>
+    <li><b>Voto do exterior.</b> Entra no total de votos de presidente, mas não nos mapas, porque não tem município.</li>
+    <li><b>Identidade.</b> A união das candidaturas de uma pessoa é uma regra nossa. Homônimos raros ou dados trocados na origem podem escapar; os valores originais ficam guardados em cada candidatura.</li>
+    <li><b>Busca de políticos.</b> Com a API ligada, a busca da pergunta 10 acha qualquer pessoa do banco. Sem ela, procura num índice gravado com 4.301 pessoas.</li>
+    <li><b>Associação não é causa.</b> Os achados mostram o que anda junto nos dados, não explicam por quê.</li>
+  </ol>
+</section>
+
+<section class="sobre-bloco wrap" id="autores" aria-labelledby="autores-t">
+  <h2 id="autores-t"><span>4</span>Autores</h2>
+  <div class="sobre-autores">
+    <p><b>Antônio Inácio da Silva Neto</b> e <b>João Marcelo Barros Cardoso Ventura</b></p>
+    <p>Trabalho da disciplina de Bancos de Dados Relacionais, Universidade Federal do Piauí, Teresina, 2026.</p>
+    <p class="muted">Trabalho acadêmico com dados públicos. Os créditos das fotos estão no rodapé da <a href="index.html">história</a>.</p>
+  </div>
+</section>
+</main>
+
+</body>
+</html>

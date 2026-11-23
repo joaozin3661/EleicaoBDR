@@ -1,0 +1,38 @@
+/* A página Sobre: fontes, método, limitações e autores. Usa a base de styles.css e o tema (tema.css). */
+.sobre-topo { position: relative; isolation: isolate; padding-block: clamp(2.5rem, 7svh, 5rem) clamp(2rem, 5svh, 3.5rem); background: var(--accent); color: #fff; overflow: hidden; }
+.sobre-topo::before { content: ""; position: absolute; inset: 0; z-index: -1; background-image: var(--pontos); background-size: 18px 18px; -webkit-mask-image: linear-gradient(260deg, #000 0 30%, transparent 70%); mask-image: linear-gradient(260deg, #000 0 30%, transparent 70%); }
+.sobre-chapeu { display: inline-block; padding: 0.4rem 0.75rem; background: #fff; color: var(--accent); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.sobre-topo h1 { margin-top: 1rem; font-size: clamp(2.75rem, 1.4rem + 5vw, 6rem); text-transform: uppercase; }
+.sobre-lead { margin-top: 1.25rem; max-width: 52ch; font-size: var(--step-lead); line-height: 1.3; font-weight: 500; }
+.sobre-indice { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 2rem; }
+.sobre-indice a { padding: 0.55rem 0.95rem; background: var(--ink); color: var(--creme); font-size: var(--step-small); font-weight: 700; text-decoration: none; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); }
+.sobre-indice a:hover, .sobre-indice a:focus-visible { background: var(--verde); }
+
+.sobre-bloco { padding-block: clamp(3rem, 8svh, 5.5rem); scroll-margin-top: var(--barra); }
+.sobre-bloco h2 { display: flex; align-items: center; gap: 0.9rem; font-size: clamp(2rem, 1.2rem + 2.6vw, 3.5rem); text-transform: uppercase; }
+.sobre-bloco h2 span { display: grid; place-items: center; width: 1.5em; height: 1.5em; background: var(--verde); color: #fff; font-size: 0.5em; }
+.sobre-bloco h3 { font-size: 1.375rem; text-transform: uppercase; }
+.sobre-bloco p { margin-top: 0.6rem; line-height: 1.5; }
+.sobre-bloco a { color: var(--accent); text-underline-offset: 0.2em; }
+
+.sobre-cartoes { margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem; }
+.sobre-cartoes article { display: flex; flex-direction: column; padding: 1.25rem 1.4rem 1.4rem; background: #fbfaf6; border-top: 6px solid var(--accent); box-shadow: 8px 8px 0 rgba(27, 26, 23, 0.1); }
+.sobre-cartoes article:nth-child(2) { border-top-color: var(--verde); }
+.sobre-cartoes article:nth-child(3) { border-top-color: var(--orange); }
+.sobre-cartoes article:nth-child(4) { border-top-color: var(--ink); }
+.sobre-cartoes .sobre-data { font-size: var(--step-small); color: var(--muted); }
+.sobre-cartoes a { margin-top: auto; padding-top: 0.9rem; font-size: var(--step-small); font-weight: 700; }
+
+.sobre-bloco--papel { background: #e3ddcf var(--pontos-tinta) 0 0 / 18px 18px; }
+.sobre-colunas { margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 2rem var(--gutter); }
+.sobre-colunas > div { padding-top: 1rem; border-top: 2px solid var(--ink); }
+
+.sobre-bloco--escuro { background: var(--ink); color: var(--creme); }
+.sobre-bloco--escuro h2 span { background: var(--orange); color: var(--ink); }
+.sobre-limites { margin: 2rem 0 0; padding: 0; list-style: none; counter-reset: lim; display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.25rem var(--gutter); }
+.sobre-limites li { counter-increment: lim; position: relative; padding: 1rem 1.1rem 1.1rem 3.4rem; background: rgba(243, 240, 232, 0.06); border-left: 4px solid var(--orange); line-height: 1.5; }
+.sobre-limites li::before { content: counter(lim); position: absolute; left: 1rem; top: 0.85rem; font-weight: 900; font-stretch: 66%; font-size: 1.6rem; line-height: 1; color: var(--orange); }
+.sobre-limites b { color: #fff; }
+
+.sobre-autores { margin-top: 1.5rem; max-width: 60ch; font-size: var(--step-lead); line-height: 1.35; }
+.sobre-autores p + p { font-size: var(--step-body); }

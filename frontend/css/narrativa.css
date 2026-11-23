@@ -1,0 +1,440 @@
+/* Scroll dinâmico, jogos e detalhes de jornal. Usa os tokens de styles.css. */
+
+/* ---------- scroll dinâmico ---------- */
+.scrolly { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); column-gap: var(--gutter); margin-top: 4rem; }
+.scrolly__grafico { position: sticky; top: max(1.5rem, 8svh); height: min(84svh, 46rem); margin: 0; grid-column: 1; grid-row: 1; display: grid; align-content: center; }
+.scrolly__passos { grid-column: 2; grid-row: 1; padding-block: 20svh 30svh; }
+.passo { min-height: 75svh; display: flex; align-items: center; }
+.passo p { max-width: 34ch; padding: 1.1rem 1.25rem; background: var(--bg); border-left: 3px solid var(--surface-2); font-size: var(--step-body); line-height: 1.45; transition: border-color var(--t-ui) var(--ease-out), opacity var(--t-ui) var(--ease-out); opacity: 0.18; }
+.passo.is-ativo p { opacity: 1; border-left-color: var(--accent); }
+.passo b { font-weight: 600; }
+.explore { grid-column: 1 / -1; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--ink); font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* versão escura (dentro da casa) */
+.casa .scrolly { margin-top: 3rem; }
+.casa .passo p { background: #161512; border-left-color: #33302a; color: var(--bg); }
+.casa .passo.is-ativo p { border-left-color: var(--bg); }
+
+@media (max-width: 47.99rem) {
+  .scrolly { grid-template-columns: minmax(0, 1fr); }
+  .scrolly__grafico { top: 0; height: 64svh; padding-top: 0.5rem; }
+  .scrolly__passos { grid-column: 1; position: relative; z-index: 2; padding-block: 40svh 20svh; }
+  .passo { min-height: 80svh; align-items: flex-end; }
+  .passo p { max-width: none; opacity: 1; box-shadow: 0 0 0 1px var(--surface-2); } /* taste-skill-ignore: contorno para separar do gráfico */
+  .casa .passo p { box-shadow: 0 0 0 1px #33302a; }
+}
+
+/* ---------- nuvem de pontos em canvas (nuvem.js): o canvas embaixo, o SVG dos eixos e anotações por cima ---------- */
+.nuvem { position: relative; }
+.nuvem__canvas { display: block; width: 100%; height: auto; }
+.nuvem > svg.nuvem__svg { position: absolute; inset: 0; width: 100%; height: 100%; } /* mesmo viewBox e mesma proporção do canvas */
+
+/* ---------- história 1: os pontos do preço da cadeira ---------- */
+.pontos { width: 100%; }
+.pontos svg { width: 100%; height: auto; display: block; overflow: visible; }
+.pontos circle { fill: var(--muted); transition: transform 1100ms var(--ease-in-out), fill 500ms var(--ease-out), opacity 500ms var(--ease-out); transition-delay: var(--d, 0ms); }
+.pontos .eleito { fill: var(--muted); }
+.pontos[data-passo="2"] .eleito, .pontos[data-passo="3"] .eleito { fill: var(--accent); }
+.pontos[data-passo="2"] circle:not(.eleito) { opacity: 0.28; }
+.pontos[data-passo="3"] circle:not(.eleito) { opacity: 0.55; }
+.pontos[data-passo="4"] circle { opacity: 0; transition-delay: 0ms; }
+/* passo 5: o quadrado da cadeira de deputado e os quadradinhos de vereador */
+.pontos .comp { pointer-events: none; }
+.pontos .comp rect { fill: var(--surface-2); opacity: 0; transform: scale(0.4); transform-box: fill-box; transform-origin: center; transition: opacity 500ms var(--ease-out), transform 700ms var(--ease-out); transition-delay: 0ms; }
+.pontos .comp rect.um { fill: var(--accent); }
+.pontos .comp .borda { fill: none; stroke: var(--ink); stroke-width: 1.5; transform: none; }
+.pontos .comp text { font-family: var(--font); font-size: 15px; fill: var(--ink); opacity: 0; transition: opacity 500ms var(--ease-out); }
+.pontos .comp text.forte { font-size: 34px; letter-spacing: -0.02em; }
+.pontos .comp text.ver { fill: var(--accent); }
+.pontos .comp text.meio { fill: var(--muted); font-style: italic; }
+.pontos .comp.is-on rect { opacity: 1; transform: none; transition-delay: calc(500ms + var(--d, 0ms)); }
+.pontos .comp.is-on rect.um { transition-delay: 300ms; }
+.pontos .comp.is-on .borda { transition-delay: 300ms; }
+.pontos .comp.is-on text { opacity: 1; transition-delay: 300ms; }
+.pontos .comp.is-on text.meio { transition-delay: 1400ms; }
+.pontos .anota { opacity: 0; transition: opacity 400ms var(--ease-out); pointer-events: none; }
+.pontos .anota.is-on { opacity: 1; transition-delay: 700ms; }
+.pontos .anota line { stroke: var(--ink); stroke-width: 1; }
+.pontos .anota text { font-family: var(--font); font-size: 15px; fill: var(--ink); }
+.pontos .anota text.forte { font-size: 34px; letter-spacing: -0.02em; }
+.pontos .eixo text { font-family: var(--font); font-size: 13px; fill: var(--muted); }
+.pontos .eixo line { stroke: var(--surface-2); }
+.pontos .eixo { opacity: 0; transition: opacity 400ms; }
+.pontos .eixo.is-on { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pontos circle, .pontos .anota, .pontos .comp rect, .pontos .comp text, .passo p { transition: none; }
+}
+
+/* ---------- história 2: a casa ---------- */
+.scrolly--casa .scrolly__grafico { align-content: center; gap: 0.75rem; }
+.scrolly--casa .casa__legenda { margin-top: 0.5rem; }
+.scrolly--casa .casa__nome { position: relative; z-index: 2; transition: transform 600ms var(--ease-out); }
+/* o último passo: os 12.646 vereadores no lugar do hemiciclo */
+.scrolly--casa .scrolly__grafico > .hemi, .scrolly--casa .casa__legenda { transition: opacity 500ms var(--ease-out); }
+.casa__ver { position: absolute; inset: 4.5rem 0 1rem; display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity 600ms var(--ease-out); }
+.casa__ver canvas { grid-area: 1 / 1; display: block; }
+.casa__ver canvas.acesos { opacity: 0; transition: opacity 700ms var(--ease-out); }
+.scrolly__grafico.is-ver > .hemi, .scrolly__grafico.is-ver .casa__legenda { opacity: 0; }
+.scrolly__grafico.is-ver .casa__ver { opacity: 1; transition-delay: 300ms; }
+.scrolly__grafico.is-ver .casa__ver canvas.acesos { opacity: 1; transition-delay: 1300ms; }
+@media (prefers-reduced-motion: reduce) { .casa__ver, .casa__ver canvas.acesos { transition: none; } }
+.explore--escuro { border-top-color: var(--bg); color: #cdc7bb; margin-top: 4rem; }
+
+/* ---------- desenhe (a linha das mulheres e a escada do patrimônio) ----------
+   As cores vêm de variáveis: o padrão é para fundo de tinta (pergunta 5); .desenhe--claro é para o papel. */
+.desenhe { --d-grade: #33302a; --d-rot: #a39d91; --d-texto: #cdc7bb; --d-forte: var(--bg); --d-ref: #7f9cc4; --d-zona: rgba(255, 255, 255, 0.04); --d-zona-borda: #3a3f47; --d-real: var(--bg); --d-botao: var(--ink);
+  margin-top: 5rem; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 1.25rem; }
+.desenhe--claro { --d-grade: var(--surface-2); --d-rot: var(--muted); --d-texto: var(--muted); --d-forte: var(--ink); --d-ref: var(--ink); --d-zona: rgba(27, 26, 23, 0.03); --d-zona-borda: #b9b2a3; --d-real: var(--accent); --d-botao: var(--bg); }
+.desenhe__topo { grid-column: 1 / 5; grid-row: 1 / 4; display: grid; gap: 0.75rem; align-content: start; }
+.desenhe__topo h3 { font-size: var(--step-lead); }
+.desenhe__topo p { color: var(--d-texto); }
+.desenhe__topo b { color: var(--d-forte); font-weight: 600; }
+.desenhe__titulo { grid-column: 5 / 13; max-width: none; font-size: var(--step-small); color: var(--d-rot); }
+.desenhe__palco { grid-column: 5 / 13; }
+.desenhe__acoes { grid-column: 5 / 13; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; }
+.desenhe__palco svg { width: 100%; height: auto; display: block; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.desenhe.is-revelado .desenhe__palco svg { cursor: default; }
+.desenhe .grade { stroke: var(--d-grade); }
+.desenhe .rot { font-family: var(--font); font-size: 13px; fill: var(--d-rot); }
+.desenhe .rot.forte { fill: var(--d-forte); }
+.desenhe .ref { fill: none; stroke: var(--d-ref); stroke-width: 2; stroke-dasharray: 5 4; }
+.desenhe .ref-rot { fill: var(--d-ref); }
+.desenhe .zona { fill: var(--d-zona); stroke: var(--d-zona-borda); stroke-dasharray: 3 4; }
+.desenhe .palpite { fill: none; stroke: var(--orange); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.desenhe .palpite-ponto { fill: var(--orange); }
+.desenhe .real { fill: none; stroke: var(--d-real); stroke-width: 3; transition: stroke-dashoffset 1400ms var(--ease-in-out); }
+.desenhe .real-ponto { fill: var(--d-real); }
+.desenhe .real-rot { fill: var(--d-real); }
+.desenhe__ver { min-height: 2.75rem; padding: 0 1.25rem; background: var(--d-forte); color: var(--d-botao); font-size: var(--step-small); }
+.desenhe--claro .desenhe__ver:not(:disabled):hover { background: var(--accent); }
+.desenhe__ver:disabled { opacity: 0.35; cursor: not-allowed; }
+.desenhe__msg { font-size: var(--step-small); color: var(--d-texto); max-width: 60ch; }
+.desenhe__msg b { color: var(--d-forte); }
+.desenhe__topo .desenhe__resposta { margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--d-grade); color: var(--d-forte); animation: resposta-entra 600ms var(--ease-out) both; }
+@keyframes resposta-entra { from { opacity: 0; transform: translateY(0.5rem); } }
+@media (prefers-reduced-motion: reduce) { .desenhe__resposta { animation: none; } }
+/* a escada: a primeira barra vem pronta, o palpite é laranja e a resposta cresce por baixo dele */
+.desenhe text.val { font-family: var(--font); font-size: 22px; fill: var(--d-forte); paint-order: stroke; stroke: var(--bg); stroke-width: 10px; stroke-linejoin: round; }
+.desenhe .barra-dada { fill: var(--ink); }
+.desenhe .interroga { font-size: 28px; fill: var(--d-zona-borda); }
+.desenhe .palpite-barra { fill: rgba(224, 112, 28, 0.22); stroke: var(--orange); stroke-width: 2.5; transition: fill 400ms var(--ease-out); }
+.desenhe .palpite-val { fill: var(--orange); }
+.desenhe.is-revelado .palpite-barra { fill: none; stroke-dasharray: 6 4; }
+.desenhe .barra-real { fill: var(--accent); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform 900ms var(--ease-expo) var(--d, 0ms); }
+.desenhe .barra-real.topo { fill: var(--ink); }
+.desenhe .real-val { opacity: 0; transition: opacity 400ms var(--ease-out) var(--d, 0ms); }
+.desenhe .ref-geral { opacity: 0; transition: opacity 500ms var(--ease-out) 1200ms; }
+.desenhe svg.is-revelado .barra-real { transform: none; }
+.desenhe svg.is-revelado .real-val, .desenhe svg.is-revelado .ref-geral { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .desenhe .barra-real, .desenhe .real-val, .desenhe .ref-geral, .desenhe .real { transition: none; }
+}
+@media (max-width: 64rem) {
+  .desenhe__topo, .desenhe__titulo, .desenhe__palco, .desenhe__acoes { grid-column: 1 / -1; grid-row: auto; }
+}
+
+/* ---------- história 3: a escada do patrimônio ---------- */
+.din .scrolly__grafico { top: calc(4.75rem + 2svh); height: min(78svh, 42rem); }
+.esc-hist__titulo { font-size: var(--step-small); color: var(--muted); margin-bottom: 1rem; }
+.esc-hist svg { width: 100%; height: auto; display: block; overflow: visible; }
+.esc-hist .barra { fill: var(--accent); transform-box: fill-box; transform-origin: 50% 100%; transition: transform 900ms var(--ease-expo), fill 400ms; }
+.esc-hist .barra.sem { fill: var(--ink); }
+.esc-hist .barra.topo { fill: var(--orange); }
+.esc-hist g.oculto .barra { transform: scaleY(0); }
+.esc-hist g text { transition: opacity 500ms var(--ease-out) 300ms; }
+.esc-hist g.oculto text.val { opacity: 0; }
+.esc-hist text { font-family: var(--font); fill: var(--ink); }
+.esc-hist .val { font-size: 22px; paint-order: stroke; stroke: var(--bg); stroke-width: 12px; stroke-linejoin: round; }
+.esc-hist .rot { font-size: 13px; fill: var(--muted); }
+.esc-hist .ref { stroke: var(--ink); stroke-dasharray: 6 5; stroke-width: 1.5; transition: opacity 400ms; }
+.esc-hist .anota { opacity: 0; transition: opacity 500ms var(--ease-out); }
+.esc-hist .anota.is-on { opacity: 1; transition-delay: 400ms; }
+.esc-hist .anota line { stroke: var(--ink); }
+.esc-hist .anota text { font-size: 15px; }
+.esc-hist .anota .forte { font-size: 30px; letter-spacing: -0.02em; }
+@media (max-width: 64rem) { .din .scrolly__grafico { top: 0; } }
+
+/* ---------- casa: legenda clicável, bancada e votos x cadeiras ---------- */
+.casa__legenda { gap: 0.4rem 0.5rem; }
+.leg-btn { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.25rem; padding: 0 0.7rem; background: #22201c; color: #cdc7bb; font-size: var(--step-small); font-variant-numeric: tabular-nums lining-nums; transition: background var(--t-hover) var(--ease-out), color var(--t-hover) var(--ease-out); }
+.leg-btn i { width: 0.7rem; height: 0.7rem; border-radius: 50%; }
+.leg-btn:hover { background: #33302a; color: var(--bg); }
+.leg-btn[aria-pressed="true"] { background: var(--bg); color: var(--ink); }
+.bancada { margin-top: 1.25rem; padding: 1.25rem; background: #161512; display: grid; gap: 0.9rem; }
+.bancada__nome { display: flex; align-items: center; gap: 0.55rem; font-size: var(--step-lead); }
+.bancada__nome i { width: 0.9rem; height: 0.9rem; border-radius: 50%; }
+.bancada__nums { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem 1.5rem; }
+.bancada__nums dt { font-size: var(--step-small); color: #a39d91; }
+.bancada__nums dd { margin: 0; font-size: var(--step-lead); }
+.bancada__caro { font-size: var(--step-small); color: #cdc7bb; }
+.bancada__caro b { color: var(--bg); font-weight: 600; }
+.vc { margin-top: 4rem; display: grid; gap: 0.75rem; max-width: 56rem; }
+.vc h3 { font-size: var(--step-lead); }
+.vc__sub { color: #cdc7bb; font-size: var(--step-small); }
+.vc__linhas { display: grid; gap: 0.55rem; margin-top: 0.5rem; }
+.vc__linha { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 8.5rem 3rem; gap: 0.75rem; align-items: center; font-size: var(--step-small); }
+.vc__nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vc__barras { display: grid; gap: 3px; }
+.vc__barras i { display: block; height: 0.5rem; min-width: 1px; }
+.vc__barras .v { background: #615b51; }
+.vc__num { color: #cdc7bb; text-align: right; }
+.vc__dif { text-align: right; font-weight: 600; }
+.vc__dif.mais { color: var(--bg); }
+.vc__dif.menos { color: var(--orange); }
+@media (max-width: 47.99rem) {
+  .vc__linha { grid-template-columns: 5.5rem minmax(0, 1fr) 2.75rem; }
+  .vc__num { display: none; }
+}
+.vc__chave { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-size: 13px; color: #a39d91; }
+.vc__chave span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.vc__chave i { display: inline-block; width: 1.4rem; height: 0.5rem; }
+.vc__chave .v { background: #615b51; }
+.vc__chave .c { background: linear-gradient(90deg, #d7191c, #1f3a93, #2ca25f); }
+
+/* ---------- ver a tabela e o SQL ---------- */
+.fonte { grid-column: 1 / -1; margin-top: 0.75rem; font-size: var(--step-small); min-width: 0; }
+.fonte summary { cursor: pointer; width: fit-content; text-decoration: underline; text-underline-offset: 0.25em; text-decoration-color: var(--accent); }
+.fonte[open] summary { margin-bottom: 1rem; }
+.fonte__corpo { display: grid; gap: 1.5rem; }
+.fonte__bloco { display: grid; gap: 0.6rem; min-width: 0; }
+.fonte__url code { font-size: 13px; color: var(--muted); }
+.fonte__sql { margin: 0; padding: 1rem; overflow: auto; background: var(--ink); color: var(--bg); font-size: 13px; line-height: 1.5; white-space: pre; max-height: 18rem; }
+.fonte__t { font-weight: 600; }
+.fonte__tab { overflow-x: auto; max-width: 100%; }
+.fonte__tab table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums lining-nums; }
+.fonte__tab th, .fonte__tab td { padding: 0.35rem 0.75rem 0.35rem 0; text-align: left; border-bottom: 1px solid var(--surface-2); white-space: nowrap; }
+.fonte__tab th { color: var(--muted); font-weight: 400; }
+.fonte__mais { color: var(--muted); font-size: 13px; }
+.casa .fonte__sql { background: #161512; }
+.casa .fonte__tab th, .casa .fonte__tab td { border-bottom-color: #33302a; }
+.casa .fonte summary { text-decoration-color: var(--bg); color: #cdc7bb; }
+
+/* ---------- carreira: mini gráficos lado a lado ---------- */
+.career__multiplos { margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.25rem; }
+.multiplo { margin: 0; padding: 0.9rem 1rem 0.6rem; background: var(--surface); display: grid; gap: 0.4rem; }
+.multiplo figcaption { display: grid; gap: 0.1rem; font-size: var(--step-small); color: var(--muted); }
+.multiplo figcaption b { color: var(--ink); font-weight: 400; font-size: var(--step-lead); line-height: 1.15; }
+.multiplo svg { width: 100%; height: auto; display: block; overflow: visible; }
+.multiplo text { font-family: var(--font); font-size: 12px; fill: var(--muted); }
+.multiplo .base { stroke: var(--surface-2); }
+.multiplo .sem { stroke: var(--muted); stroke-dasharray: 2 2; }
+
+/* ---------- mapa: entrada do estado depois do zoom ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .terr__svg svg.entra { animation: mapa-entra 520ms var(--ease-out) both; }
+}
+@keyframes mapa-entra { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+
+/* ---------- detalhes de jornal (1a) ---------- */
+.dateline { max-width: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 1.5rem; padding-block: 0.55rem; border-bottom: 1px solid var(--ink); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.dateline__ed { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; max-width: none; }
+.dateline__ed span + span::before { content: "·"; margin-right: 1rem; color: var(--surface-2); } /* separador entre os itens da linha de edição */
+.dateline__nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; }
+.dateline__nav a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+.dateline__nav a:hover, .dateline__nav a:focus-visible { border-bottom-color: currentColor; }
+@media (min-width: 48rem) { .dateline, .dateline__ed, .dateline__nav { flex-wrap: nowrap; white-space: nowrap; } }
+@media (max-width: 99.99rem) { .dateline__ed span:nth-child(2) { display: none; } }
+@media (min-width: 100rem) { .dateline__ed { column-gap: 1.5rem; } .dateline__ed span + span::before { margin-right: 1.5rem; } .dateline__nav { column-gap: 1.4rem; } }
+h2[data-chapeu]::before { content: attr(data-chapeu); display: block; margin-bottom: 0.9rem; font-size: 0.8125rem; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.casa h2[data-chapeu]::before, .din-abre h2[data-chapeu]::before, .figure h2[data-chapeu]::before { color: #a39d91; }
+.din-abre h2[data-chapeu]::before { color: rgba(255, 255, 255, 0.75); }
+.ultima { padding-block: 5rem; border-top: 1px solid var(--ink); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 1rem; align-items: end; }
+.ultima .chapeu-solto { grid-column: 1 / -1; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.ultima h2 { grid-column: 1 / 6; font-size: var(--step-head); }
+.ultima p:not(.chapeu-solto) { grid-column: 6 / 11; }
+.ultima .button { grid-column: 11 / 13; justify-self: end; }
+@media (max-width: 47.99rem) {
+  .dateline, .dateline__ed { gap: 0.15rem 0.9rem; }
+  .dateline__ed span + span::before { margin-right: 0.9rem; }
+  .dateline__nav { gap: 0.15rem 0.9rem; }
+  .ultima h2, .ultima p:not(.chapeu-solto), .ultima .button { grid-column: 1 / -1; justify-self: start; }
+}
+.esc-hist .rot.forte { fill: var(--ink); }
+
+.esc-hist__ref { display: flex; align-items: center; gap: 0.6rem; margin: -0.5rem 0 0.75rem; font-size: var(--step-small); color: var(--muted); opacity: 0; transition: opacity 400ms var(--ease-out); }
+.esc-hist__ref.is-on { opacity: 1; }
+.esc-hist__ref i { width: 1.75rem; border-top: 1.5px dashed var(--ink); }
+
+/* no celular os desenhos encolhem: o texto dentro deles cresce para continuar legível
+   (historias.js também troca posições e rótulos quando a tela é estreita) */
+@media (max-width: 47.99rem) {
+  .pontos .eixo text { font-size: 28px; }
+  .pontos .anota text { font-size: 28px; }
+  .pontos .anota text.forte { font-size: 52px; }
+  .esc-hist .val { font-size: 21px; stroke-width: 11px; }
+  .esc-hist .rot { font-size: 14.5px; }
+  .esc-hist .anota text { font-size: 15px; }
+  .esc-hist .anota .forte { font-size: 26px; }
+  .scrolly__grafico { height: 58svh; }
+}
+
+/* ---------- telas: cada parada do scroll mostra um bloco inteiro (o encaixe fica em js/encaixe.js) ---------- */
+:root { --h-graf: min(46rem, calc(100svh - 15rem)); }
+@media (min-width: 48rem) {
+  /* tela 1: o nome, a descrição, a foto e o mapa */
+  .hero { height: calc(100svh - 2.4rem); min-height: 38rem; grid-template-rows: auto auto auto minmax(0, 1fr); padding-bottom: 2rem; }
+  .hero h1 { grid-column: 1 / 9; grid-row: 2; margin-top: 1svh; font-size: clamp(5rem, 1rem + 10vw, 13rem); }
+  .hero__talk { grid-column: 1 / 6; grid-row: 3; margin-top: 1.25rem; max-width: 34ch; align-self: start; }
+  .hero__talk p { font-size: var(--step-lead); line-height: 1.3; }
+  .hero__picture { grid-column: 1 / 8; grid-row: 4; margin-top: 2rem; display: flex; flex-direction: column; min-height: 0; }
+  .hero__picture .frame { flex: 1; height: auto; min-height: 10rem; }
+  .hero__mapa { grid-column: 9 / 13; grid-row: 2 / 5; align-self: end; margin: 0; min-height: 0; }
+  .hero__mapa .mapa { max-height: 52svh; width: auto; max-width: 100%; }
+  /* tela 2: o projeto, separado por um fio */
+  .intro { min-height: 100svh; align-content: center; border-top: 1px solid var(--ink); padding-block: 4rem; }
+
+  /* histórias: título, gráfico e primeiro passo na mesma tela */
+  .custo, .esc { padding-top: 3rem; }
+  .esc { padding-bottom: 4rem; }
+  .esc--explora { padding-top: 1.5rem; }
+  .casa__topo { padding-top: 3rem; }
+  .custo__topo h2 { font-size: var(--step-head); }
+  .custo__std, .esc__topo p { font-size: var(--step-body); }
+  .scrolly, .casa .scrolly { margin-top: 2rem; }
+  .scrolly__grafico, .din .scrolly__grafico { top: calc((100svh - var(--h-graf)) / 2); height: var(--h-graf); }
+  .scrolly__passos { padding-block: 0 calc((100svh - var(--h-graf)) / 2 + 10svh); }
+  .scrolly__passos .passo:first-child { min-height: var(--h-graf); }
+  .scrolly__grafico svg { max-height: calc(var(--h-graf) - 5rem); }
+  /* a nuvem (canvas + SVG por cima) tem o mesmo limite de altura: estreita pela proporção do desenho (--aspecto, de nuvem.js) */
+  .scrolly__grafico .nuvem { width: 100%; max-width: calc((var(--h-graf) - 5rem) * var(--aspecto, 1.7)); margin-inline: auto; }
+  .scrolly__grafico .nuvem > svg.nuvem__svg { max-height: none; }
+  /* o passo da resposta vira o dado de impacto */
+  .passo--dado p { background: var(--accent); color: var(--accent-ink); border-left-color: var(--accent); }
+  .passo--dado.is-ativo p { border-left-color: var(--accent); }
+  .passo--dado .dado { display: block; margin-bottom: 0.6rem; font-weight: 400; font-size: var(--step-head); line-height: 1; letter-spacing: -0.03em; }
+
+  /* telas de explorar: mais espaço antes do bloco escuro, que encaixa centralizado */
+  .duelo { margin-top: 9rem; }
+  /* quociente: ocupa a tela inteira e cobre a sombra da barra de filtros que sai */
+  .figure { min-height: 100svh; position: relative; z-index: 25; }
+  /* dinheiro: títulos mais perto do topo */
+  .morro, .chao { padding-top: 2.5rem; }
+  /* nuvem de palavras com mais contraste */
+  .chao__nuvem span { color: #8f897d; }
+  .chao__nuvem span.w1 { font-size: var(--step-small); }
+  .chao__nuvem span.w3 { font-size: clamp(2.25rem, 1.4rem + 2.2vw, 3.5rem); }
+  .chao__nuvem span.forte { color: var(--bg); }
+  /* casas: desenhe a linha separado da história; hemiciclo do explorar cabe com a legenda */
+  .desenhe { margin-top: 14rem; }
+  .casa__palco .casa__hemi .hemi { max-width: calc((100svh - 31rem) * 1.9); margin-inline: auto; }
+  .casa { padding-bottom: 5rem; }
+  /* território: título, abas, mapa e painel na mesma tela */
+  .terr__topo h2 { font-size: var(--step-head); }
+  .terr__topo p { font-size: var(--step-body); }
+  .terr__ctrl { margin-top: 1.5rem; gap: 0.75rem; }
+  .terr__palco { margin-top: 1rem; }
+  .terr__svg { height: clamp(18rem, calc(100svh - 31rem), 44rem); }
+  /* método: tudo numa tela */
+  .many__diagram { margin-top: 2rem; }
+  .many__diagram svg { max-height: 30svh; }
+  .many__steps { margin-top: 1.5rem; }
+}
+/* carreiras: a tela fica parada e só os anos rolam (só em telas altas o bastante para mostrar alguns anos) */
+@media (min-width: 48rem) and (min-height: 56rem) {
+  .careers { height: 100svh; padding-block: 2rem; grid-template-rows: auto minmax(0, 1fr); }
+  .careers__body { margin-top: 1.25rem; min-height: 0; height: 100%; align-items: stretch; }
+  .careers .people { align-self: start; }
+  .career { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+  .career__anos { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-right: 0.5rem; }
+  .careers { padding-block: 1.5rem; }
+  .careers__top p { margin-top: 0.5rem; }
+}
+
+/* desenhe do explorar: os botões de cargo ficam embaixo do texto */
+.desenhe__cargos { margin-top: 0.5rem; }
+.desenhe__cargos button { min-height: 2.5rem; font-size: var(--step-small); }
+
+/* ---------- pergunta 4: os 100 bonecos ---------- */
+.bonecos svg { width: 100%; height: auto; display: block; }
+.boneco circle, .boneco path { fill: #d9d3c5; transition: fill 600ms var(--ease-out) var(--d, 0ms); }
+.boneco[data-g="1"] circle, .boneco[data-g="1"] path { fill: #9a9384; }
+.boneco[data-g="2"] circle, .boneco[data-g="2"] path { fill: var(--accent); }
+.bonecos__leg { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 1.25rem; font-size: var(--step-small); color: var(--muted); }
+.bonecos__leg span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.bonecos__leg b { color: var(--ink); font-weight: 600; }
+.bonecos__leg i { width: 0.85rem; height: 0.85rem; border-radius: 50%; }
+.bonecos__leg i.g0 { background: #d9d3c5; } .bonecos__leg i.g1 { background: #9a9384; } .bonecos__leg i.g2 { background: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .boneco circle, .boneco path { transition: none; } }
+
+/* ---------- pergunta 8: a fila dos candidatos que vira colunas ---------- */
+.fila__graf svg { width: 100%; height: auto; display: block; overflow: visible; }
+.fila__barra { transition: x 900ms var(--ease-in-out), y 900ms var(--ease-in-out), width 900ms var(--ease-in-out), height 900ms var(--ease-in-out), fill 500ms var(--ease-out), opacity 500ms var(--ease-out); }
+.fila__barra.f0 { fill: #d9d3c5; } .fila__barra.f1 { fill: var(--orange); } .fila__barra.f2 { fill: #c3cfdf; } .fila__barra.f3 { fill: #98afcb; }
+.fila__barra.f4 { fill: #6d8db5; } .fila__barra.f5 { fill: #44699a; } .fila__barra.f6 { fill: var(--accent); }
+.fila__graf text { font-family: var(--font); font-size: 15px; fill: var(--muted); }
+.fila__graf text.forte { fill: var(--ink); }
+.fila__notas text.forte { font-size: 30px; letter-spacing: -0.02em; }
+.fila__val { font-size: 24px !important; fill: var(--ink) !important; }
+.fila__notas, .fila__rots, .fila__val { transition: opacity 500ms var(--ease-out); }
+.fila__graf svg[data-passo="0"] .fila__rots, .fila__graf svg[data-passo="0"] .fila__val { opacity: 0; }
+.fila__graf svg:not([data-passo="0"]) .fila__notas { opacity: 0; }
+.fila__graf svg:not([data-passo="0"]) .fila__rots, .fila__graf svg:not([data-passo="0"]) .fila__val { transition-delay: 700ms; }
+.fila__graf svg[data-passo="1"] .fila__barra:not(.f6), .fila__graf svg[data-passo="2"] .fila__barra:not(.f2):not(.f3):not(.f4) { opacity: 0.3; }
+
+/* ---------- pergunta 9: os 100 quadrados ---------- */
+.cem__graf svg { height: min(60svh, 40rem); width: auto; max-width: 100%; display: block; }
+.cem__q { fill: #d9d3c5; transition: fill 500ms var(--ease-out) var(--d, 0ms); }
+.cem__q.is-on { fill: var(--accent); }
+.cem__q.is-on[data-g="0"] { fill: var(--ink); }
+.cem__q.is-on[data-g="1"] { fill: var(--orange); }
+.bonecos__leg i.c0, .bonecos__leg i.c1, .bonecos__leg i.c2, .bonecos__leg i.c3, .bonecos__leg i.c4, .bonecos__leg i.c5 { border-radius: 0; background: #d9d3c5; }
+.bonecos__leg i.on { background: var(--accent); }
+#cem-leg i.c0.on { background: var(--ink); }
+#cem-leg i.c1.on { background: var(--orange); }
+@media (prefers-reduced-motion: reduce) { .fila__barra, .cem__q { transition: none; } }
+.cem .scrolly__grafico { justify-items: center; }
+
+/* ---------- pergunta 6: as 30 prefeituras ---------- */
+.trinta__graf svg { width: 100%; height: auto; display: block; }
+.casa30 path { fill: #d9d3c5; transition: fill 500ms var(--ease-out) var(--d, 0ms); }
+.casa30 .porta { fill: var(--bg); }
+.casa30[data-cor="a"] path { fill: var(--orange); }
+.casa30[data-cor="b"] path { fill: var(--ink); }
+.casa30[data-cor="c"] path { fill: var(--accent); }
+.bonecos__leg i.casa-i { border-radius: 0; background: #d9d3c5; }
+.bonecos__leg i.casa-i.a { background: var(--orange); } .bonecos__leg i.casa-i.b { background: var(--ink); } .bonecos__leg i.casa-i.c { background: var(--accent); }
+
+/* ---------- pergunta 3: os municípios pelo IDHM ---------- */
+.idh__graf svg { width: 100%; height: auto; display: block; overflow: visible; }
+.idh__p { fill: var(--accent); opacity: 0.55; transition: transform 1000ms var(--ease-in-out), opacity 500ms var(--ease-out), fill 400ms var(--ease-out); }
+.idh__p.some { opacity: 0; }
+.idh__p.acima { fill: var(--orange); opacity: 1; }
+.idh__graf svg[data-passo="1"] .idh__p:not(.acima):not(.some) { opacity: 0.3; }
+.idh__graf svg[data-passo="3"] .idh__p:not(.some) { opacity: 0.12; }
+.idh__eixo { opacity: 0; transition: opacity 500ms var(--ease-out); }
+.idh__eixo.is-on { opacity: 1; }
+.idh__eixo text { font-family: var(--font); font-size: 15px; fill: var(--muted); }
+.idh__eixo line { stroke: var(--surface-2); }
+.idh__eixo line.forte { stroke: var(--ink); stroke-dasharray: 6 5; }
+.idh__barra { fill: var(--ink); opacity: 0.9; transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform 900ms var(--ease-expo) var(--d, 0ms); }
+.idh__val { font-family: var(--font); font-size: 19px; fill: var(--ink); opacity: 0; transition: opacity 400ms var(--ease-out); }
+.idh__barras.is-on .idh__barra { transform: none; transition-delay: calc(400ms + var(--d, 0ms)); }
+.idh__barras.is-on .idh__val { opacity: 1; transition-delay: 1100ms; }
+.idh__anota { opacity: 0; transition: opacity 400ms var(--ease-out); }
+.idh__anota.is-on { opacity: 1; transition-delay: 900ms; }
+.idh__anota line { stroke: var(--ink); }
+.idh__anota text { font-family: var(--font); font-size: 17px; fill: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .casa30 path, .idh__p, .idh__barra { transition: none; } }
+
+/* ---------- pergunta 10: a trilha de uma carreira ---------- */
+.trilha__graf svg { width: 100%; height: auto; display: block; overflow: visible; }
+.trilha__guia { stroke: var(--surface-2); }
+.trilha__cargo, .trilha__ano { font-family: var(--font); font-size: 15px; fill: var(--muted); }
+.trilha__linha { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; transition: stroke-dashoffset 2200ms var(--ease-in-out); }
+.trilha__p { fill: var(--ink); stroke: var(--bg); stroke-width: 3; opacity: 0; transition: fill 500ms var(--ease-out) var(--d, 0ms), opacity 400ms var(--ease-out) calc(var(--d, 0ms) * 2); }
+.trilha__graf svg.is-visto .trilha__p { opacity: 1; }
+.trilha__graf svg:not([data-passo="0"]) .trilha__p.v { fill: var(--accent); }
+.trilha__graf svg:not([data-passo="0"]) .trilha__p.s { fill: var(--bg); stroke: var(--ink); stroke-width: 2.5; }
+.trilha__graf svg:not([data-passo="0"]) .trilha__p.d { fill: var(--orange); }
+.trilha__siglas text { font-family: var(--font); font-size: 14px; fill: var(--muted); opacity: 0; transition: opacity 400ms var(--ease-out); }
+.trilha__siglas text.troca { fill: var(--ink); font-weight: 600; }
+.trilha__siglas.is-on text { opacity: 1; }
+.trilha__raro { opacity: 0; transition: opacity 500ms var(--ease-out); }
+.trilha__raro.is-on { opacity: 1; transition-delay: 300ms; }
+.trilha__raro rect { fill: var(--ink); }
+.trilha__raro text { font-family: var(--font); font-size: 18px; fill: var(--bg); }
+.trilha__raro text.forte { font-size: 30px; letter-spacing: -0.02em; }
+.bonecos__leg i.tr { border-radius: 50%; background: var(--ink); }
+.bonecos__leg i.tr.v { background: var(--accent); } .bonecos__leg i.tr.d { background: var(--orange); } .bonecos__leg i.tr.s { background: var(--bg); box-shadow: inset 0 0 0 2px var(--ink); }
+@media (prefers-reduced-motion: reduce) { .trilha__linha, .trilha__p { transition: none; } }

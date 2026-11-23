@@ -1,255 +1,156 @@
-# Projeto BD Eleições (TSE / IBGE)
+# Eleições BDR
 
-Trabalho de **Banco de Dados Relacional** (UFPI). Modela, carrega e consulta dados eleitorais públicos
-para responder **10 perguntas oficiais**, no escopo de **6 estados (AL, PA, PB, PR, SC, SE; 1.238 municípios)**
-e eleições de **2002 a 2024**.
+Eleições de 2002 a 2026 no Brasil inteiro (as 27 unidades da federação, 5.571 municípios, 2,9 milhões de candidaturas),
+com dados públicos do TSE, do IBGE e do Atlas Brasil. O projeto modela e carrega esses dados num banco PostgreSQL
+(`eleicoes`) e responde **10 perguntas** com views SQL, mostradas num site com o SQL de cada resposta.
 
-O projeto tem três partes:
-
-```
-TSE / IBGE / IPEA          Python                      PostgreSQL                    Node + React
-(arquivos públicos) ─────> crawler/ ──> carga_v2 ──>  banco eleicoes_v2  ──views──> site_eleicoes/
-                           baixa        gera CSV e      tabelas + views              API só faz SELECT
-                                        importa                                      nas views
-```
-
-| Parte | Pasta | O que faz |
-|---|---|---|
-| Crawler | `crawler/` | Baixa dos sites oficiais só os arquivos necessários (6 GB de download, ~33 GB em disco). [Detalhes](docs/CRAWLER.md) |
-| Carga e banco | `dados/questoes/carga_v2/` | Limpa os dados, resolve a identidade das pessoas, gera um CSV por tabela, importa no PostgreSQL e cria as views |
-| Site de consulta | `site_eleicoes/` | Os dados das perguntas, com filtros (React + API em Node, lê o banco). [Detalhes](site_eleicoes/README.md) |
-| Site de apresentação (Confirma) | `site_novo/` | O relatório visual: as perguntas como capítulos, o hemiciclo com cada eleito, o mapa por município, as fotos dos candidatos e a página de consultas com o SQL das views. Estático: abre sem banco. [Detalhes](site_novo/README.md) |
-
-**Regra do projeto:** o site e o app só leem **views** do banco (`views_*.sql`). Toda regra de negócio fica nas views,
-não no front. Mudou um critério? Mude a view.
-
-## Para começar (quem recebeu o projeto)
-
-**Caminho recomendado: usar a cópia do banco (dump).** Com ela você não precisa baixar os dados brutos nem rodar o
-crawler ou a carga: o dump já é o banco pronto, com as tabelas, as views e as views materializadas. Siga os passos
-1 a 4 abaixo e **pule a seção "Montar tudo do zero"**, que só serve para reconstruir o banco a partir dos arquivos do
-TSE e do IBGE.
-
-### 1. Pegar o código novo
-
-O código atual está na branch `main`. Se você já tinha clonado o repositório antes, a sua cópia está **antiga**:
-atualize assim, dentro da pasta do projeto:
+Começou como trabalho de **Banco de Dados Relacional** (UFPI, 2026), de Antônio Inácio da Silva Neto e João Marcelo
+Barros Cardoso Ventura.
 
 ```
-git switch main
-git pull origin main
+TSE / IBGE / IPEA        coleta/            banco/carga/          PostgreSQL               api/                 frontend/
+(arquivos públicos) ───> baixa ───> dados/ ───> CSVs ───> eleicoes + views ───> SELECT nas views ───> site
 ```
 
-Se ainda não tem o projeto:
+| Pasta | O que tem |
+|---|---|
+| `frontend/` | O site: `index.html` (o relatório), `consultas.html` (as perguntas, com filtros, gráficos e o SQL) e `sobre.html` (fontes, método, limitações e autores). HTML, CSS e JS sem build. |
+| `api/` | Servidor em Node (Express + TypeScript): os endpoints que fazem SELECT nas views e servem o `frontend/`. Em `api/exportacao/`, o que grava os dados do site para ele funcionar sem banco. |
+| `banco/` | `sql/esquema.sql` (as 14 tabelas), `sql/views/` (as views de cada pergunta), `carga/` (scripts que geram e importam os CSVs) e `testes/`. |
+| `coleta/` | Baixa os arquivos oficiais (`python -m coleta`) e as fotos dos candidatos (`baixar_fotos.py`). |
+| `dados/` | O que a coleta baixa e a carga gera (fora do git) e os dicionários de dados do TSE (`tse/leiames_unificados/`). |
+| `docs/` | O DER, a coleta, as justificativas dos dados, a descrição de cada pergunta (`QUESTOES.md`) e o dossiê. |
+
+**Regra do projeto:** o site só lê **views** do banco. Toda regra de negócio fica nas views (`banco/sql/views/`), não
+no front. Mudou um critério? Mude a view.
+
+## Rodar o site
+
+Precisa do **PostgreSQL 18**, do **Node.js 20+** e do **Python 3.10+**.
+
+1. **O banco.** O site lê o `eleicoes`, com as 27 UFs, que se monta com a coleta e a carga
+   ([Montar o banco do zero](#montar-o-banco-do-zero), algumas horas).
+2. **A senha e o banco.** Copie `.env.example` para `.env`, na raiz, troque `COLOQUE_SUA_SENHA_AQUI` pela senha do
+   `postgres` da sua instalação (o exemplo já traz `PGDATABASE=eleicoes`). É o único `.env`
+   do projeto e nunca vai para o git.
+3. **O site, lendo o banco ao vivo:**
+   ```
+   cd api
+   npm install
+   npm start
+   ```
+   Abra http://localhost:3001. Cada tela pergunta à API, que roda o SQL nas views na hora.
+
+### Sem o banco
+
+O site também funciona sem a API, com as respostas gravadas em `frontend/dados/`. É assim que ele vai para o
+GitHub Pages.
 
 ```
-git clone https://github.com/joaozin3661/EleicaoBDR.git
-cd EleicaoBDR
-```
-
-Para conferir que pegou a versão nova: a pasta `site_novo/` tem que existir, e `git log --oneline -3` mostra
-os commits mais recentes (o do site novo é "Site de apresentação (site_novo) ..."). Se o `git pull` reclamar de
-alterações locais, guarde as suas antes com `git stash` e rode o `git pull` de novo.
-
-### 2. Ter o banco (pelo dump)
-
-O banco não fica no git. A cópia (`eleicoes_v2.dump`, 135 MB) está anexada à release `banco-2026-10-22` do GitHub.
-O passo a passo está em [docs/COMO_RESTAURAR_O_BANCO.md](docs/COMO_RESTAURAR_O_BANCO.md): instalar o PostgreSQL 18,
-baixar o arquivo, restaurar com `pg_restore` e conferir as contagens (uns 10 minutos).
-
-### 3. Abrir o site de apresentação (`site_novo`)
-
-Ele não precisa do banco: as respostas das views já estão gravadas em `site_novo/dados/`. Só precisa de um servidor
-local, porque o navegador não lê os arquivos de dados se você abrir o `index.html` com dois cliques.
-
-```
-cd site_novo
+cd frontend
 python -m http.server 8000
 ```
 
-(no Windows, se `python` não existir, use `py -m http.server 8000`; com Node instalado, `npx serve -l 8000` também serve).
-Abra http://localhost:8000. A página de consultas, com o SQL de cada pergunta, fica em http://localhost:8000/consultas.html.
+Abra http://localhost:8000 (no Windows, se `python` não existir, use `py`). O `frontend/js/dados.js` decide sozinho:
+servido pela API, pergunta ao banco; servido por outro lugar, lê os arquivos.
 
-Para regerar os dados do `site_novo` a partir do **seu** banco (depois de mudar uma view, por exemplo), veja
-`site_novo/README.md`.
+### Comandos da API (em `api/`)
 
-### 4. Rodar o site de consulta (`site_eleicoes`)
+| Comando | O que faz |
+|---|---|
+| `npm start` | Site e API em http://localhost:3001 (`PORT` no `.env` troca a porta). |
+| `npm run dev` | O mesmo, reiniciando quando um arquivo `.ts` muda. |
+| `npm run grava` | Regrava `frontend/dados/` a partir do banco: as respostas de todas as combinações de filtros, a busca da Q10 e os dados do hemiciclo, do mapa e das carreiras. Rode depois de mudar uma view. |
+| `npm run fotos` | Escolhe as fotos que o site usa e gera as miniaturas em `frontend/fotos/`. Precisa das fotos originais (`python coleta/baixar_fotos.py`). |
+| `npm run publica -- <pasta>` | Copia para `<pasta>` só o que vai para a internet, sem documentos pessoais. |
+| `npm run typecheck` | Confere os tipos do TypeScript. |
 
-Este lê o banco restaurado no passo 2. Precisa do **Node.js 20+**.
+As fotos (30 mil miniaturas) ficam fora do git: gere com `npm run fotos` ou copie de quem já tem para `frontend/fotos/`.
+Sem elas o site funciona, só sem as fotos.
 
-```
-cd site_eleicoes
-copy .env.example .env      (no Linux/macOS: cp .env.example .env)
-```
+## O banco `eleicoes`
 
-No `.env`, troque `COLOQUE_SUA_SENHA_AQUI` pela senha do `postgres` da **sua** instalação. Depois:
-
-```
-npm install
-npm run dev
-```
-
-Abra http://localhost:5173. O `.env` fica fora do git: cada um usa a própria senha.
-
-### O que fica de fora com o dump
-
-Nada do que está acima precisa dos dados brutos (`dados/tse/`, `dados/ibge/`, `dados/questoes/questao1/` e `questao10/`).
-Eles só fazem falta para mudar a carga (`carga_v2.py`) e recarregar as tabelas do zero, ou para regerar as fotos dos
-candidatos, que já estão no git como miniaturas em `site_novo/fotos/`.
-
-## Estrutura do repositório
-
-```
-crawler/                      pacote Python que baixa os dados (python -m crawler)
-docs/CRAWLER.md               documentação completa do crawler e das fontes
-docs/DER_v2.md                diagrama entidade-relacionamento do banco eleicoes_v2 (imagem, fonte e mudanças da v1)
-dados/
-├── INDICE_PERGUNTAS.md       quais arquivos cada uma das 10 perguntas usa
-├── LeiaParaEntenderProjeto/  dossiê do projeto (Word/PDF), handoff e SQL das versões antigas
-├── questoes/
-│   ├── carga_v2/             PIPELINE ATUAL: scripts de carga, DDL e views (banco eleicoes_v2)
-│   ├── questao1/ questao10/  entradas e scripts da v1 (legado; os CSVs não ficam no Git)
-├── tse/leiames_unificados/   dicionários de dados do TSE (significado de cada coluna)
-└── (tse/, ibge/, ipea_atlas/ ...)  dados brutos: NÃO ficam no Git, o crawler baixa
-site_eleicoes/                site de consulta (React + Express + TypeScript)
-site_novo/                    site de apresentação (HTML, CSS e JS sem build; dados e fotos já gravados)
-docs/COMO_RESTAURAR_O_BANCO.md  como baixar e restaurar a cópia do banco
-```
-
-## O banco `eleicoes_v2`
-
-14 tabelas (`pessoa`, `eleicao`, `partido`, `municipio`, `candidatura`, `bem_declarado`, `receita`, `despesa`, `votacao`,
-`votacao_legenda`, `eleitorado`, `totalizacao_municipio`, `vaga`, `indicador_municipal`). DDL em
-`dados/questoes/carga_v2/der_eleicoes_v2.sql`.
+As 27 UFs, de 2002 a 2026: 5.571 municípios, 2.949.123 candidaturas, 1.856.162 pessoas, 12.062.880 despesas e
+22.156.436 linhas de votação (uns 8,5 GB). 2026 entra só com candidaturas, bens, resultado e votos (arquivos do TSE
+baixados em 13/11/2026); a prestação de contas de 2026 fica de fora porque ainda é parcial (ver docs/QUESTOES.md). O presidente não entra: o arquivo do TSE o registra na unidade `BR`, e a
+carga fica só com as 27 siglas de UF. 14 tabelas: `pessoa`, `eleicao`, `partido`, `municipio`, `candidatura`, `bem_declarado`, `receita`, `despesa`,
+`votacao`, `votacao_legenda`, `eleitorado`, `totalizacao_municipio`, `vaga` e `indicador_municipal`
+([DER](docs/DER.md)).
 
 Decisões que valem saber antes de mexer:
 
-- **`pessoa` tem chave sintética (`id_pessoa`)**, não o título de eleitor. No TSE a mesma pessoa aparece com títulos diferentes
-  e pessoas diferentes aparecem com o mesmo título. A identidade é resolvida em `carga_v2.py` (descrição no topo do arquivo)
-  e pode ser conferida com `conferir_identidade.py`.
+- **`pessoa` tem chave sintética (`id_pessoa`)**, não o título de eleitor. No TSE a mesma pessoa aparece com títulos
+  diferentes e pessoas diferentes aparecem com o mesmo título. A identidade é resolvida em `banco/carga/carga.py`
+  (descrição no topo do arquivo) e pode ser conferida com `banco/testes/conferir_identidade.py`. A tela "Identidade dos
+  políticos" do site mostra casos reais.
 - `candidatura.titulo_declarado` e `cpf_declarado` guardam o valor original do TSE, sem alteração.
 - Despesas usadas: **contratadas** (não as pagas). Candidato sem despesa conta como R$ 0.
 - Eleições suplementares são descartadas. Vices e suplentes de senador não entram no custo por cadeira.
 - Formato do TSE: Latin-1, separador `;`, nulos como `#NULO`, `#NE`, `-1`, `-3`, `-4`. O CPF vem oculto (`-4`) em 2024.
-- Os 6 estados e os anos estão definidos dentro dos scripts (não há argumentos de linha de comando).
 
-## Montar tudo do zero
+Os dados usados e as decisões de cada pergunta estão em [docs/JUSTIFICATIVA_DADOS.md](docs/JUSTIFICATIVA_DADOS.md).
 
-> **Opcional.** Esta seção é para reconstruir o banco a partir dos arquivos brutos (crawler e carga). Quem restaurou a
-> cópia do banco (dump) pelo [passo 2 de "Para começar"](#2-ter-o-banco-pelo-dump) **não precisa fazer nada daqui**.
+## Montar o banco do zero
 
-Pré-requisitos: **Python 3.10+**, **PostgreSQL 18** (com pgAdmin 4) e **Node.js 20+**.
+> É o jeito de ter o `eleicoes` (27 UFs). Também serve, com `CARGA_UFS` menor, para montar um banco de teste.
 
-### 1. Clonar e preparar o ambiente
-
-```
-git clone <URL-DO-REPOSITORIO>
-cd <pasta-clonada>
-pip install -r requirements.txt
-pip install pandas psycopg2-binary
-```
-
-Copie `.env.example` para `.env` (na raiz) e preencha `PGPASSWORD` com a senha do **seu** postgres. O `.env` nunca vai para o GitHub.
-
-### 2. Obter os dados
-
-Os dados brutos **não estão no Git** (dezenas de GB). Há duas origens:
-
-1. **`dados/tse/`, `dados/ibge/`, `dados/ipea_atlas/`:** rode o crawler na raiz do repositório.
+1. **Ambiente:** `pip install -r requirements.txt`, com o `.env` da raiz preenchido.
+2. **Dados brutos** (dezenas de GB, fora do git):
+   - `python -m coleta --simular` mostra o plano e o espaço; `python -m coleta` baixa para `dados/tse/`,
+     `dados/ibge/` e `dados/ipea_atlas/` (pode ser interrompido e retomado). Detalhes em [docs/CRAWLER.md](docs/CRAWLER.md).
+   - A carga lê só o que a coleta baixa (os consolidados `_BRASIL` do TSE) e fica com os estados de `CARGA_UFS`.
+3. **Estados e banco** (no `.env` da raiz ou no ambiente; o ambiente vale mais):
+   - `CARGA_UFS=TODAS` para as 27 UFs, que é o que o site usa hoje. Dá para restringir: `CARGA_UFS=AL,PA,PB,PR,SC,SE`
+     (os seis estados do projeto original) ou qualquer lista de siglas. Sem a variável, o código ainda cai nesses
+     seis estados.
+   - `CARGA_BANCO=eleicoes`: o banco em que os `importar_*.py` gravam (sem ela, o `PGDATABASE`, que também deve
+     ser `eleicoes`). Para testar uma carga sem tocar nele, use outro nome: `createdb -U postgres eleicoes_teste` e
+     `CARGA_BANCO=eleicoes_teste`.
+   - Banco vazio: `createdb -U postgres <nome>` (ou pelo pgAdmin).
+4. **Gerar os CSVs** (em `dados/saida_carga/`), nesta ordem:
    ```
-   python -m crawler --simular
-   python -m crawler
+   python banco/carga/carga.py
+   python banco/carga/carga_bens.py
+   python banco/carga/carga_receitas.py
+   python banco/carga/carga_eleitorado.py
+   python banco/carga/carga_idade_municipio.py
+   python coleta/ibge_2010.py
+   python banco/carga/carga_q3.py
+   python banco/carga/carga_q5.py
+   python banco/carga/carga_votos_majoritarios.py
+   python banco/carga/carga_votos_q7.py
+   python banco/carga/carga_vies.py
    ```
-   O primeiro comando só mostra o plano e o espaço usado. O segundo baixa (pode ser interrompido e retomado).
-2. **`dados/questoes/questao1/` e `dados/questoes/questao10/`** (~2,5 GB: `consulta_cand_*`, `prestacao*`, `vagas`,
-   `candidato2002`…`candidato2016`, `municipio_tse_ibge`): são as entradas do `carga_v2.py` e **não são geradas
-   pelo crawler**. Peça uma cópia ao João e coloque nessas pastas, mantendo a estrutura.
-
-### 3. Criar o banco e carregar
-
-1. No pgAdmin: botão direito em **Databases > Create > Database...**, nome `eleicoes_v2`.
-2. Gerar os CSVs (cria `dados/questoes/carga_v2/saida/`):
+5. **Importar** (o primeiro cria as tabelas com `banco/sql/esquema.sql`; para recomeçar, mude `RECRIAR = True` nele):
    ```
-   python dados/questoes/carga_v2/carga_v2.py
-   python dados/questoes/carga_v2/carga_bens.py
-   python dados/questoes/carga_v2/carga_receitas.py
-   python dados/questoes/carga_v2/carga_eleitorado.py
-   python dados/questoes/carga_v2/carga_idade_municipio.py
-   python dados/questoes/carga_v2/baixa_ibge_2010.py
-   python dados/questoes/carga_v2/carga_q3.py
-   python dados/questoes/carga_v2/carga_q5.py
+   python banco/carga/importar.py
+   python banco/carga/importar_bens.py
+   python banco/carga/importar_receitas.py
+   python banco/carga/importar_eleitorado.py
+   python banco/carga/importar_idade.py
+   python banco/carga/importar_q3.py
+   python banco/carga/importar_q5.py
+   python banco/carga/importar_q7.py
+   psql -U postgres -d eleicoes -v pasta="<raiz do projeto>" -f banco/carga/importar_votos_majoritarios.sql
    ```
-3. Importar no banco (o primeiro cria as tabelas com `der_eleicoes_v2.sql`; para recomeçar, mude `RECRIAR = True` dentro do arquivo):
-   ```
-   python dados/questoes/carga_v2/importar_v2.py
-   python dados/questoes/carga_v2/importar_bens.py
-   python dados/questoes/carga_v2/importar_receitas.py
-   python dados/questoes/carga_v2/importar_eleitorado.py
-   python dados/questoes/carga_v2/importar_idade.py
-   python dados/questoes/carga_v2/importar_q3.py
-   python dados/questoes/carga_v2/importar_q5.py
-   ```
-4. No pgAdmin (Query Tool no `eleicoes_v2`), rode **nesta ordem**:
-   1. `views_v2.sql` (base, Q1, Q10, resumo e qualidade)
-   2. `views_q2.sql` (patrimônio x sucesso)
-   3. `views_q3.sql` (IDHM e PIB x abstenção, brancos, nulos e partidos, 2008 e 2012)
-   4. `views_q4.sql` (escolaridade)
-   5. `views_q5.sql` (eleitos por votos de legenda; leva cerca de 1 minuto)
-   6. `views_q6.sql` (idade do município e alternância)
-   7. `views_q8.sql` (dinheiro público x privado)
-   8. `views_q9.sql` (categorias de despesa e nuvem de palavras; leva cerca de 6 minutos)
+6. **Views:** `psql -U postgres -d eleicoes -f banco/sql/aplicar_views.sql` (uns 45 minutos com as 27 UFs, contra uns
+   4 minutos com seis estados). As views materializadas guardam o resultado: depois de recarregar dados, rode de novo.
+   Em `banco/sql/migracoes/` ficam os ajustes pontuais para quem já tem o banco carregado, sem refazer tudo (hoje, a
+   `2026-11-17_q1_presidente.sql`, que põe o presidente no custo da cadeira da Q1). Um banco montado agora já vem certo
+   pelo `aplicar_views.sql` e não precisa delas.
+7. **Conferir:** as contagens de cada passo ficam em `dados/_controle/carga.log` (pessoas, candidaturas, municípios,
+   linhas importadas "banco x CSV"), e `psql -U postgres -d eleicoes -f banco/testes/contagens.sql` tem que dar "ok"
+   em todas as linhas. Então `npm run grava` em `api/`.
 
-   As views materializadas guardam o resultado: depois de recarregar dados, rode os arquivos de novo.
+   A carga completa de 27 UFs, medida no `carga.log`: `carga` uns 15 minutos, `importar` uns 28, `importar_q5`
+   uns 21 e as views uns 43.
 
-Contagens de referência: ao final, `importar_v2.py` confere o banco contra os CSVs e imprime as divergências, se houver.
-
-### 4. Rodar o site
-
-```
-cd site_eleicoes
-copy .env.example .env      (edite a senha)
-npm install
-npm run build
-npm start
-```
-
-Abra http://localhost:3001. Para desenvolver com recarga automática, use `npm run dev` (http://localhost:5173).
-
-**Versão estática (para mandar um link, sem banco):** com o `npm start` rodando, execute `npm run grava:estatico` e depois
-`npm run build:estatico`. A pasta `dist-estatico/` pode ser hospedada em qualquer lugar (por exemplo, arrastada em
-https://app.netlify.com/drop). Ela inclui a página de justificativas. Detalhes em `site_eleicoes/README.md`.
-
-Alternativa em Python: `pip install streamlit plotly` e `streamlit run dados/questoes/carga_v2/app_v2.py` (Q1 e Q10).
-
-## Estado atual
+## Estado
 
 | Item | Situação |
 |---|---|
-| Crawler (TSE, IBGE, IPEA, Dataverse) | pronto |
-| Carga v2: pessoa, candidatura, vaga, despesa, bens, receitas, eleitorado, idade do município, indicadores de 2010, totalização 2008/2012 | pronta |
-| Perguntas respondidas (banco + site): **Q1, Q2, Q3, Q4, Q5, Q6, Q8, Q9, Q10** | prontas, com verificação independente em pandas |
-| Q7 (ideologia dos partidos) | adiada: falta a base de ideologia |
-| Tabelas `votacao` e `votacao_legenda` | carregadas para as eleições proporcionais (2018 a 2024) |
-| Site: carga, tratamento e as 9 perguntas, mais versão estática com página de justificativas | pronto |
-| DER da v2 (`docs/DER_v2.md`, com imagem) | pronto |
-| Site de apresentação (`site_novo`): capítulos das perguntas, hemiciclo, mapa por município, Q3 aprofundada, fotos | pronto (Q10 como capítulo próprio em andamento) |
-| Cópia do banco para colaboradores (release `banco-2026-10-22`) | pronta |
-| Dossiê Word atualizado para a v2 (incluir o DER novo e o texto das mudanças) | pendente |
-
-Os dados usados e as decisões de cada pergunta (o que foi conferido e as limitações) estão em `JUSTIFICATIVA_DADOS.md`.
-
-O documento `dados/LeiaParaEntenderProjeto/LEIA_PRIMEIRO_projeto_eleicoes.md` descreve a **v1** (banco `eleicoes`,
-título de eleitor como chave) e está desatualizado nesses pontos; vale pelo histórico das decisões e dos problemas resolvidos.
-O significado de cada pergunta e os arquivos que ela usa estão em `dados/INDICE_PERGUNTAS.md`.
-
-## Trabalhando em dupla no Git
-
-1. Antes de começar: `git pull`.
-2. Uma branch por tarefa: `git switch -c q3-carga-indicadores`.
-3. Commits pequenos, com mensagem dizendo o quê e por quê.
-4. Abra um Pull Request para a `main` e peça para o outro revisar. Ninguém dá push direto na `main`.
-5. **Nunca commite:** `.env`, senhas, dados brutos, CSVs gerados (`saida/`), `node_modules/`. O `.gitignore` já cobre isso;
-   se um arquivo grande aparecer em `git status`, não adicione e avise.
-6. Mudou o DDL (`der_eleicoes_v2.sql`) ou uma view? Avise o outro: cada um tem seu banco local e precisa reaplicar.
-7. Scripts em `questao1/` e `questao10/` (nomes como `pythonTABELA.py`, `lerCarga.py`) são **exploração da v1** e têm caminhos
-   do PC do João fixos no código. Não use como referência; o pipeline atual é o `carga_v2/`.
+| Coleta (TSE, IBGE, IPEA, Dataverse) | pronta |
+| Carga (27 UFs, `eleicoes`): pessoa, candidatura, vaga, despesa, bens, receitas, eleitorado, idade do município, indicadores de 2010, totalização 2008/2012, votos | pronta |
+| Perguntas respondidas no banco: **Q1 a Q10** | prontas |
+| Q7 (viés político) | pronta: banco, API e tela |
+| Site: relatório, consultas das perguntas, o banco e a identidade dos políticos | pronto |

@@ -1,1 +1,4 @@
-httpx>=0.27
+# pip install -r requirements.txt
+httpx>=0.27            # coleta/ (python -m coleta, baixar_fotos.py)
+pandas>=2.2            # banco/carga/ (carga_*.py) e banco/testes/conferir_identidade.py
+psycopg2-binary>=2.9   # banco/carga/ (importar_*.py)

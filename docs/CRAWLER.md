@@ -15,11 +15,11 @@ pip install -r requirements.txt
 ```
 
 ```bash
-python -m crawler --simular
+python -m coleta --simular
 ```
 
 ```bash
-python -m crawler
+python -m coleta
 ```
 
 | Opção | Efeito |
@@ -44,13 +44,12 @@ Como o crawler se comporta:
 - **Com trava de espaço:** antes de baixar, lê o índice de cada zip no servidor, soma o que será
   extraído e aborta se passar do `--limite-gb` ou do espaço livre.
 
-Para mudar o que é baixado, edite só `crawler/catalogo.py` (`ITENS` e `NECESSIDADES`).
+Para mudar o que é baixado, edite só `coleta/catalogo.py` (`ITENS` e `NECESSIDADES`).
 
 ## Organização de `dados/`
 
 ```
 dados/
-├── INDICE_PERGUNTAS.md            <- o que cada pergunta usa e o que já foi baixado
 ├── tse/
 │   ├── candidatos/<ano>/                        consulta_cand_<ano>_BRASIL.csv + leiame.pdf
 │   ├── bens_candidatos/<ano>/
@@ -71,7 +70,7 @@ dados/
 
 Organizei por **fonte/tipo/ano** e não por pergunta porque o mesmo arquivo serve a várias perguntas
 (a lista de candidatos é usada pelas 10). Pastas por pergunta duplicariam gigabytes. A visão por
-pergunta fica no `INDICE_PERGUNTAS.md`, gerado a cada execução.
+pergunta fica em [QUESTOES.md](QUESTOES.md), que diz que dados cada uma usa.
 
 ## Pergunta -> dados
 
